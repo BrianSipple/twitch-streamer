@@ -17,7 +17,7 @@ window.onload = function () {
         currentPage = 0,
         isSearching = false,
 
-    // Settings for XHR
+        // Settings for XHR
         BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
         MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
 
@@ -26,8 +26,49 @@ window.onload = function () {
             pageSize: 5,  // initialize a default page size
             numStreams: 0,
             totalPages: 1,
-            steams: undefined  // FILL here with data necessary for rendering the search results
-        };
+            streams: undefined  // FILL here with data necessary for rendering the search results
+        },
+
+        loadJSONP = (function loadJSONP () {
+
+            var callCount = 0;
+
+            return function (url, callback, context) {
+                // INIT
+                var name = '_jsonp_' + callCount++;
+
+                // First, check whether a url has already been fully made EXCEPT for the
+                // necessary callback parameter
+                if (url.match(/callback=/)) {
+                    url = url.replace(/callback=/, 'callback=' + name);
+
+                } else if (url.match(/\?/)) {
+                    url += '?callback=' + name;
+                }
+
+                // create the script
+                var script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = url;
+
+                // Setup handler
+                window[name] = function (data) {
+
+                    // Execute the callback
+                    callback.call( (context || window), data);
+
+                    // cleanup
+                    document.querySelector('head').removeChild(script);
+                    script = null;
+                    delete window[name];
+                };
+
+                // Load ze JSON
+                document.querySelector('head').appendChild(script);
+            };
+
+        }());
+
 
     searchForm.addEventListener('submit', handleSearchSubmit);
 
@@ -37,6 +78,7 @@ window.onload = function () {
 
     function handleSearchSubmit(e) {
 
+        e.preventDefault();
         debugger;
 
         var searchString = this.searchInput.value;
@@ -70,11 +112,13 @@ window.onload = function () {
     }
 
 
+
+
     /**
      * Return a new Promise based upon sending an XHR request for data
      * to the given url
      */
-    function get(url) {
+    function getJSONP(url) {
 
         return new Promise(function (resolve, reject) {
 
@@ -119,14 +163,13 @@ window.onload = function () {
             //// Here we go!
             //req.send();
 
-
-            // TODO: Complete this!
             loadJSONP(url, function (data) {
+                debugger;
                 if (data) {
                     resolve(data);
 
                 } else {
-                    reject(data);
+                    reject();
                 }
             });
 
@@ -134,9 +177,7 @@ window.onload = function () {
     }
 
 
-    function getJSON(url) {
-        return get(url).then(JSON.parse);
-    }
+
 
 
     function makeUrlStringFromSearchInput(searchString) {
@@ -154,17 +195,16 @@ window.onload = function () {
 
         var urlString = makeUrlStringFromSearchInput(searchString);
 
-        return getJSON(urlString).then(function (response) {
+        return getJSONP(urlString).then(function (response) {
 
-            // Handle successful return of the search
-            isSearching = false;
-            searchSubmitButton.classList.remove('disabled');
+            debugger;
 
             var results = response.streams;
 
             if (results) {
                 listContent.streams = results;  // store results
-                listContent.totalPages = response._total;
+                listContent.numStreams = response._total;
+                listContent.totalPages = Math.ceil(listContent.numStreams / listContent.pageSize);
                 renderStreams(results.slice(0, listContent.pageSize));  // render results for the first page
 
             } else {
