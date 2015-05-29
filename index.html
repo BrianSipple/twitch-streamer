@@ -1,45 +1,70 @@
 <!doctype html>
 <html class="no-js" lang="">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link rel="apple-touch-icon" href="apple-touch-icon.png">
-        <!-- Place favicon.ico in the root directory -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Place favicon.ico in the root directory -->
 
-        <link rel="stylesheet" href="styles/normalize.css">
-        <link rel="stylesheet" href="styles/main.css">
-        <script src="vendor/modernizer/modernizr.js"></script>
+    <link rel="stylesheet" href="styles/normalize.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="vendor/modernizer/modernizr.js"></script>
 
-    </head>
-    <body>
-        <!--[if lt IE 8]>
-            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
+</head>
+<body>
+<!--[if lt IE 8]>
+<p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
+    your browser</a> to improve your experience.</p>
+<![endif]-->
 
-        <div class="main-view-container">
+<div class="main-view-container">
 
+    <section class="page-section_nav">
 
-            <section class="page-section_main-content">
-
-                <div>
-                    Hello, Twich Streamer!
-                </div>
-
-            </section>
-
+        <div class="search-container">
+            <form method="get">
+                <label for="searchInput">Find Streams</label>
+                <input id="searchInput" name="searchInput" type="text" placeholder="Search query..."/>
+                <input type="submit" id="searchSubmit" value="Search">
+            </form>
         </div>
+    </section>
+
+    <section class="page-section_main-content">
+
+        <header>
+
+            <div class="results-count">
+
+            </div>
+
+            <div class="page-nav">
+                <button class="page-nav prev">&#10148;</button>
+                <span class="current-page"></span>/<span class="total-pages"></span>
+                <button class="page-nav next">&#x27a4;</button>
+            </div>
+
+        </header>
+
+        <section class="stream-list-container">
+
+        </section>
+
+    </section>
+
+</div>
 
 
-        <!-- Plugins and utils -->
-        <script src="js/lib/base-plugins.js"></script>
+<!-- Plugins and utils -->
+<script src="js/lib/base-plugins.js"></script>
 
 
-        <!-- App files -->
-        <script src="js/main.js"></script>
-    
-    </body>
+<!-- App files -->
+<script src="js/main.js"></script>
+
+</body>
 </html>
