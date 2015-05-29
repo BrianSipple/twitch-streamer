@@ -92,8 +92,7 @@ nav, a, button {
    Author's custom styles
    ========================================================================== */
 html,
-body,
-.main-view-container {
+body {
     width: 100vw;
     height: 100vh;
     margin: 0;
@@ -101,9 +100,64 @@ body,
     font-size: 16px;
 }
 
+body {
+    background-color: hsla(0, 0%, 96%, 1);
+}
+
+.main-view-container {
+    background-color: hsla(0, 100%, 100%, 1);
+    width: 70%;
+    max-width: 700px;
+    min-width: 460px;
+    height: 90%;
+    margin-top: 1em;
+    margin-right: auto;
+    margin-bottom: 0.5em;
+    margin-left: auto;
+    border: 1px solid black;
+}
+
+[class^="page-section_"] {
+    width: 100%;
+    overflow: hidden;
+    text-align: left;
+}
+
+[class^="page-section_heading"] {
+    height: 15%;
+    border-bottom: 1px solid black;
+}
+
+[class^="page-section_main-content"] {
+    height: 85%;
+}
+
+.section-container {
+    padding: 0.3em 0.8em;
+}
+
+
 .content-wrapper {
     padding: 0.3em 0.8em;
 }
+
+
+#searchInput:invalid {
+    box-shadow: 0 0 3px 1px hsla(360, 100%, 50%, 0.8);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ==========================================================================
    Helper classes

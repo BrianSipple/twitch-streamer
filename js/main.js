@@ -1,44 +1,72 @@
 window.onload = function () {
 
 
+    // Wire up DOM elements
     var resultsListContainer = document.querySelector('.results-list-container'),
         mainViewContainer = document.querySelector('.main-view-container'),
         totalResultsCountElem = document.querySelector('.results-count'),
-        searchInput = document.querySelector('.search-input'),
-        searchSubmit = document.querySelector('#searchSubmit'),
+        searchInput = document.querySelector('#searchInput'),
+        searchSubmitButton = document.querySelector('#searchSubmit'),
+        searchForm = document.querySelector('#searchForm'),
         errorDialog = document.querySelector('.error-dialog'),
         streamListContainer = document.querySelector('stream-list-container'),
         prevPageButton = document.querySelector('.page-nav.prev'),
         nextPageButton = document.querySelector('.page-nav.next'),
+
+
         currentPage = 0,
-        isSearching = false;
+        isSearching = false,
 
-    var listContent = {
-        pageSize: 5,  // initialize a default page size
-        totalPages: 1,
-        steams: undefined  // FILL here with data necessary for rendering the search results
-    };
+    // Settings for XHR
+        BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
+        MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
 
-    searchSubmit.addEventListener('click', handleSearchSubmit);
+
+        listContent = {
+            pageSize: 5,  // initialize a default page size
+            numStreams: 0,
+            totalPages: 1,
+            steams: undefined  // FILL here with data necessary for rendering the search results
+        };
+
+    searchForm.addEventListener('submit', handleSearchSubmit);
 
     prevPageButton.addEventListener('click', decrementPage);
     nextPageButton.addEventListener('click', incrementPage);
 
 
+    function handleSearchSubmit(e) {
 
-    function handleSearchSubmit() {
+        debugger;
 
-        var searchString = searchInput.value;
+        var searchString = this.searchInput.value;
 
-        if (searchString === undefined) {
-            // Respond to user when button is clicked without a search term
-        } else if (!isSearching) {
+        if (!isSearching) {
 
             isSearching = true;
-            searchSubmit.classList.add('disabled');
+            searchSubmitButton.classList.add('disabled');
 
-            searchForStreams(searchString);
+            searchForStreams(searchString).then(function (resp) {
+                isSearching = false;
+                searchSubmitButton.classList.remove('disabled');
+            });
         }
+    }
+
+
+    function createCORSRequest(method, url) {
+
+        var req = new XMLHttpRequest();
+
+        if ('withCredentials' in req) {
+            // Check if the XMLHttpRequest object has a "withCredentials" property.
+            // "withCredentials" only exists on XMLHTTPRequest2 objects.
+            req.open(method, url, true);
+
+        } else {
+            req = null;
+        }
+        return req;
     }
 
 
@@ -50,14 +78,22 @@ window.onload = function () {
 
         return new Promise(function (resolve, reject) {
 
-            var req = new XMLHttpRequest();
-            req.open('GET', url);
+            var req = createCORSRequest('GET', url);
+
+            if (!req) {
+                reject(Error('CORS not supported with this browser'));
+            }
+
+            var reqTimer = setTimeout(function () {  // if XHR won't finish before timeout, trigger a failure
+                req.abort();
+            }, MAX_XHR_WAITING_TIME);
 
             req.onload = function () {
 
                 // onload is called even on a 404, so check the status
                 if (req.status === 200) {
-                    resolve(req.response);
+                    clearTimeout(reqTimer);
+                    resolve(req.responseText);
 
                 } else {
                     // Otherwise reject with the status text
@@ -66,10 +102,19 @@ window.onload = function () {
                 }
             };
 
+            // Account for exceeding the timeout limit
+            req.onabort = function () {
+                reject(Error('Request exceeded timeout limit of ' + MAX_XHR_WAITING_TIME + 'ms'));
+            };
+
             // Account for any networking errors that might occur
             req.onerror = function () {
                 reject(Error('Network Error'));
             };
+
+            // Decorate the request with the proper headers needed for API access
+            req.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
+            req.withCredentials = true;
 
             // Here we go!
             req.send();
@@ -82,20 +127,29 @@ window.onload = function () {
     }
 
 
+    function makeUrlStringFromSearchInput(searchString) {
+        return (searchString !== 'undefined') ?
+            BASE_URL :
+            BASE_URL + encodeURIComponent(searchString);
+    }
+
+
     function searchForStreams(searchString) {
 
-        var url = makeUrlFromSearchString(searchString);
 
-        return getJSON(url).then(function (response) {
+        var urlString = makeUrlStringFromSearchInput(searchString);
+
+        return getJSON(urlString).then(function (response) {
 
             // Handle successful return of the search
             isSearching = false;
-            searchSubmit.classList.remove('disabled');
+            searchSubmitButton.classList.remove('disabled');
 
             var results = response.streams;
 
             if (results) {
                 listContent.streams = results;  // store results
+                listContent.totalPages = response._total;
                 renderStreams(results.slice(0, listContent.pageSize));  // render results for the first page
 
             } else {
@@ -111,25 +165,24 @@ window.onload = function () {
      * Given a list of streams, build up, then inject,
      * a list fragment into the streams container
      */
-    function renderStreams (streams) {
-
+    function renderStreams(streams) {
+        console.log(streams);
     }
 
 
-    function reportNoMatch () {
-
+    function reportNoMatch() {
+        console.log('Successful search operation, but no streams found');
     }
 
 
-
-    function decrementPage () {
+    function decrementPage() {
 
         if (currentPage > 1) {
 
             currentPage--;
 
             var startIndex = (currentPage - 1) * listContent.pageSize,
-            streamsToRender = listContent.streams.slice(startIndex, startIndex + listContent.pageSize);
+                streamsToRender = listContent.streams.slice(startIndex, startIndex + listContent.pageSize);
 
             renderStreams(streamsToRender);
 
@@ -141,7 +194,7 @@ window.onload = function () {
         }
     }
 
-    function incrementPage () {
+    function incrementPage() {
 
         if (currentPage < listContent.totalPages) {
 
@@ -153,6 +206,7 @@ window.onload = function () {
             renderStreams(streamsToRender);
 
             if (currentPage === listContent.totalPages) {
+                nextPageButton.disable();
                 nextPageButton.classList.add('disabled');
             }
 
@@ -161,9 +215,4 @@ window.onload = function () {
 
         }
     }
-
-
-
-
-
 };

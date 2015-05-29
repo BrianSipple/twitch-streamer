@@ -23,36 +23,46 @@
 
 <div class="main-view-container">
 
-    <section class="page-section_nav">
+    <section class="page-section_heading">
 
-        <div class="search-container">
-            <form method="get">
-                <label for="searchInput">Find Streams</label>
-                <input id="searchInput" name="searchInput" type="text" placeholder="Search query..."/>
-                <input type="submit" id="searchSubmit" value="Search">
-            </form>
+        <div class="section-container">
+            <header class="search-container">
+                <form id="searchForm" name="searchForm">
+                    <label for="searchInput">Find Streams</label>
+                    <input id="searchInput"
+                           name="searchInput"
+                           type="text"
+                           maxlength="500"
+                           autofocus
+                           title="search"
+                           placeholder="Search query..."/>
+                    <input name="searchSubmit" type="submit" id="searchSubmit" value="Search">
+                </form>
+            </header>
         </div>
+
     </section>
 
     <section class="page-section_main-content">
 
-        <header>
+        <div class="section-container">
+            <header>
+                <div class="results-count">
 
-            <div class="results-count">
+                </div>
+
+                <div class="page-nav">
+                    <button class="page-nav prev">&#10148;</button>
+                    <span class="current-page"></span>/<span class="total-pages"></span>
+                    <button class="page-nav next">&#x27a4;</button>
+                </div>
+            </header>
+
+            <div class="stream-list-container">
 
             </div>
 
-            <div class="page-nav">
-                <button class="page-nav prev">&#10148;</button>
-                <span class="current-page"></span>/<span class="total-pages"></span>
-                <button class="page-nav next">&#x27a4;</button>
-            </div>
-
-        </header>
-
-        <section class="stream-list-container">
-
-        </section>
+        </div>
 
     </section>
 
