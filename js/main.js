@@ -78,46 +78,58 @@ window.onload = function () {
 
         return new Promise(function (resolve, reject) {
 
-            var req = createCORSRequest('GET', url);
+            //var req = createCORSRequest('GET', url);
+            //
+            //if (!req) {
+            //    reject(Error('CORS not supported with this browser'));
+            //}
+            //
+            //var reqTimer = setTimeout(function () {  // if XHR won't finish before timeout, trigger a failure
+            //    req.abort();
+            //}, MAX_XHR_WAITING_TIME);
+            //
+            //req.onload = function () {
+            //
+            //    // onload is called even on a 404, so check the status
+            //    if (req.status === 200) {
+            //        clearTimeout(reqTimer);
+            //        resolve(req.responseText);
+            //
+            //    } else {
+            //        // Otherwise reject with the status text
+            //        // which will hopefully be a meaningful error
+            //        reject(Error(req.statusText));
+            //    }
+            //};
+            //
+            //// Account for exceeding the timeout limit
+            //req.onabort = function () {
+            //    reject(Error('Request exceeded timeout limit of ' + MAX_XHR_WAITING_TIME + 'ms'));
+            //};
+            //
+            //// Account for any networking errors that might occur
+            //req.onerror = function () {
+            //    reject(Error('Network Error'));
+            //};
+            //
+            //// Decorate the request with the proper headers needed for API access
+            //req.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json, application/json');
+            //req.withCredentials = true;
+            //
+            //// Here we go!
+            //req.send();
 
-            if (!req) {
-                reject(Error('CORS not supported with this browser'));
-            }
 
-            var reqTimer = setTimeout(function () {  // if XHR won't finish before timeout, trigger a failure
-                req.abort();
-            }, MAX_XHR_WAITING_TIME);
-
-            req.onload = function () {
-
-                // onload is called even on a 404, so check the status
-                if (req.status === 200) {
-                    clearTimeout(reqTimer);
-                    resolve(req.responseText);
+            // TODO: Complete this!
+            loadJSONP(url, function (data) {
+                if (data) {
+                    resolve(data);
 
                 } else {
-                    // Otherwise reject with the status text
-                    // which will hopefully be a meaningful error
-                    reject(Error(req.statusText));
+                    reject(data);
                 }
-            };
+            });
 
-            // Account for exceeding the timeout limit
-            req.onabort = function () {
-                reject(Error('Request exceeded timeout limit of ' + MAX_XHR_WAITING_TIME + 'ms'));
-            };
-
-            // Account for any networking errors that might occur
-            req.onerror = function () {
-                reject(Error('Network Error'));
-            };
-
-            // Decorate the request with the proper headers needed for API access
-            req.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json');
-            req.withCredentials = true;
-
-            // Here we go!
-            req.send();
         });
     }
 
@@ -128,9 +140,12 @@ window.onload = function () {
 
 
     function makeUrlStringFromSearchInput(searchString) {
+
+        var callbackParam = '&callback=';   // Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
+
         return (searchString !== 'undefined') ?
-            BASE_URL :
-            BASE_URL + encodeURIComponent(searchString);
+            BASE_URL + callbackParam :
+            BASE_URL + encodeURIComponent(searchString) + callbackParam;
     }
 
 
