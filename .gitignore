@@ -17,8 +17,7 @@ coverage
 # Vendor-related directories
 npm-debug.log
 node_modules
-bower_components
-vendor
+
 
 
 # IDEs
