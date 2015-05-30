@@ -4,7 +4,7 @@ window.onload = function () {
     var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
         MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
 
-        //////// Wire up some initial references to DOM elements that we'll be manipulating
+        //////////////// Wire up some initial references to DOM elements that we'll be manipulating ////////////////
         mainViewContainer = document.querySelector('.main-view-container'),
         totalResultsCountElem = document.querySelector('.results-count-container'),
 
@@ -21,13 +21,13 @@ window.onload = function () {
 
 
         // Page nav references
-        currentPageElem = document.querySelector('.current-page'),
+        currentPageNumberElem = document.querySelector('.current-page'),
         totalPagesElem = document.querySelector('.total-pages'),
         prevPageButton = document.querySelector('.page-nav.prev'),
         nextPageButton = document.querySelector('.page-nav.next'),
 
 
-        ////// State tracking variables
+        //////////////// State tracking variables ////////////////
         currentPage = 1,
         isSearching = false,
 
@@ -35,10 +35,11 @@ window.onload = function () {
             pageSize: 5,  // initialize a default page size
             numStreams: 0,
             totalPages: 1,
-            streams: undefined,  // FILL here with data necessary for rendering the search results
-            pageFragments: []
+            currentPageElem: undefined
         },
 
+        // Helper for setting a JSONP callback when making API requests
+        // (Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
         loadJSONP = (function loadJSONP () {
 
             var callCount = 0;
@@ -79,9 +80,8 @@ window.onload = function () {
 
         }());
 
-
+    //////////////// Event listeners ////////////////
     searchForm.addEventListener('submit', handleSearchSubmit);
-
     prevPageButton.addEventListener('click', decrementPage);
     nextPageButton.addEventListener('click', incrementPage);
 
@@ -105,21 +105,21 @@ window.onload = function () {
     }
 
 
-    function createCORSRequest(method, url) {
-
-        var req = new XMLHttpRequest();
-
-        if ('withCredentials' in req) {
-            // Check if the XMLHttpRequest object has a "withCredentials" property.
-            // "withCredentials" only exists on XMLHTTPRequest2 objects.
-            req.open(method, url, true);
-
-        } else {
-            req = null;
-        }
-        return req;
-    }
-
+    // TODO: Determine if needed
+    //function createCORSRequest(method, url) {
+    //
+    //    var req = new XMLHttpRequest();
+    //
+    //    if ('withCredentials' in req) {
+    //        // Check if the XMLHttpRequest object has a "withCredentials" property.
+    //        // "withCredentials" only exists on XMLHTTPRequest2 objects.
+    //        req.open(method, url, true);
+    //
+    //    } else {
+    //        req = null;
+    //    }
+    //    return req;
+    //}
 
 
 
@@ -218,10 +218,10 @@ window.onload = function () {
                 // update UI with correct counts
                 totalResultsCountElem.textContent = 'Total Results: ' + listContent.numStreams.toString();
                 totalPagesElem.textContent = listContent.totalPages.toString();
-                currentPageElem.textContent = currentPage.toString();
+                currentPageNumberElem.textContent = currentPage.toString();
 
-                renderFirstPageAfterSearch(results.slice(0, listContent.pageSize));  // render results for the first page
-                makePageFragmentsAfterSearch(results);
+                renderFirstPageAfterSearch(results.slice(0, listContent.pageSize));  // render results for the first page (this also becomes the first fragment in our in-menory list
+                makePageFragmentsAfterSearch(results.slice(listContent.pageSize));   // get to work on building our in-memory list for everything else
 
             } else {
                 reportNoMatch();  // TODO: Implement
@@ -237,31 +237,30 @@ window.onload = function () {
 
         var listElemContainer = document.createElement('div'),
             previewImageElem = document.createElement('img'),
-            listElemInfoContainer = document.createElement('div'),
+            itemInfoContainer = document.createElement('div'),
 
-            imageWidth = 100,
-            imageHeight = 100;
+            imageWidth = 160,
+            imageHeight = 125;
 
 
-        /////// Compose the fragment that will be appended to listElemInfoContainer ///////
-        var infoFrag = document.createDocumentFragment(),
-            streamTitle = document.createElement('h2'),
-            streamSubtitle = document.createElement('p'),
-            streamDescription = document.createElement('div');
+        /////// Compose the pieces that will be appended to listElemInfoContainer ///////
 
         // Title
+        var streamTitle = document.createElement('h2');
         streamTitle.textContent = streamData.channel['display_name'];
-        infoFrag.appendChild(streamTitle);
 
         // Subtitle
+        var streamSubtitle = document.createElement('p');
         streamSubtitle.textContent = streamData.game + ' - ' + streamData.viewers + ' viewers';
-        infoFrag.appendChild(streamSubtitle);
 
         // Description
+        var streamDescription = document.createElement('div');
         streamDescription.textContent = streamData.channel.status;
-        infoFrag.appendChild(streamDescription);
 
-        listElemInfoContainer.appendChild(infoFrag);
+
+        itemInfoContainer.appendChild(streamTitle);
+        itemInfoContainer.appendChild(streamSubtitle);
+        itemInfoContainer.appendChild(streamDescription);
 
 
         //// Create the proper source string for our preview image and set it on the elem /////
@@ -273,15 +272,15 @@ window.onload = function () {
 
         ////// Compose the final list element out of the preview image and the info element
         listElemContainer.appendChild(previewImageElem);
-        listElemContainer.appendChild(infoFrag);
+        listElemContainer.appendChild(itemInfoContainer);
 
         return listElemContainer;
     }
 
     /**
      * We want to be able to display the first page right away after a user searches,
-     * so this method will take a slice of the results and render an initial DOM Fragment
-     * to the list
+     * so this method will take a page-sized slice of the results and render an initial fragment
+     * to the DOM.
      */
     function renderFirstPageAfterSearch (streams) {
 
@@ -293,6 +292,11 @@ window.onload = function () {
             streamListFragment.appendChild(streamElem);
         }
         streamListContainer.appendChild(streamListFragment);
+
+        // set the fragment as the first element of the list that's tracking them
+        listContent.pageFragments = [];
+        listContent.currentPageElem = streamListFragment.firstChild;
+        listContent.pageFragments.push(streamListFragment);
     }
 
     /**
@@ -300,17 +304,64 @@ window.onload = function () {
      * that can then be efficiently indexed and displayed later
      */
     function makePageFragmentsAfterSearch (streams) {
+        if ( (!listContent.hasOwnProperty('pageFragments')) ||
+             (!Array.isArray(listContent.pageFragments)) ||
+             (listContent.pageFragments.length === 0) ) {
 
+            // This should never be reached!
+            throw new Error('No list exists upon which to add stream fragments. It should have already been created');
+        } else {
+
+            var streamListFragment = document.createDocumentFragment();
+
+            var streamElem;
+            for (var i = 0, l = streams.length; i < l; i++) {
+                streamElem = buildStreamElem(streams[i]);
+                streamListFragment.appendChild(streamElem);
+                listContent.pageFragments.push(streamListFragment);
+            }
+        }
     }
 
 
 
 
     /**
-     * render a fragment stored at a given index on our list
+     * Flip from the current page to a new page based upon the corresponding
+     * indices given.
      */
-    function renderPageFragment(fragIdx) {
+    function flipPage (currentPageIdx, newPageIdx, isDecrementing) {
 
+        var currentPageElem = streamListContainer.children[currentPageIdx];
+
+        if (currentPageElem === undefined) {
+            throw new Error('flipPage: no current page found -- we shouldn\'t be executing this');
+        }
+
+        currentPageElem.classList.remove('current-page');
+
+        // Apply class selectors to animate page-flip
+        // TODO: CSS Animation?
+        !!isDecrementing ?
+            currentPageElem.classList.add('flip-prev') :
+            currentPageElem.classList.add('flip-next');
+
+
+        //////////////// Bring in the new hotness ////////////////
+
+        var nextPageElem = streamListContainer.children[newPageIdx];
+
+        // If the DOM container already has the page fragment, we just need to make it visible
+        if (nextPageElem) {
+            nextPageElem.classList.add('current-page'); // TODO: CSS Animation?
+
+        } else {
+            // If not, we're appending it for the first time from our in-memory list.
+            streamListContainer.appendChild(listContent.pageFragments[newPageIdx]);
+            streamListContainer.lastChild.classList.add('current-page');  // TODO: CSS Animation?
+
+            // QUESTION: Do we even need fragments with this approach? At this point, it kind of just looks to be unused overhead
+        }
     }
 
 
@@ -319,44 +370,51 @@ window.onload = function () {
     }
 
 
+    /**
+     * Triggered on click to "previous page" button
+     */
     function decrementPage() {
 
         if (currentPage > 1) {
 
             currentPage--;
 
-            var startIndex = (currentPage - 1) * listContent.pageSize,
-                streamsToRender = listContent.streams.slice(startIndex, startIndex + listContent.pageSize);
-
-            renderPageFragment(streamsToRender);
+            var newPageIdx = (currentPage - 1);
+            flipPage(currentPage, newPageIdx, true);
 
             if (currentPage === 1) {
+                prevPageButton.disabled = true;
                 prevPageButton.classList.add('disabled');
             }
 
-            nextPageButton.classList.remove('disabled');  // QUESTION: Correct placement of class removal?
+            if (!!nextPageButton.disabled) {
+                nextPageButton.disabled = false;
+                nextPageButton.classList.remove('disabled');  // QUESTION: Correct placement of class removal?
+            }
         }
     }
 
+    /**
+     * Triggered by click to "next page" button
+     */
     function incrementPage() {
 
         if (currentPage < listContent.totalPages) {
 
             currentPage++;
 
-            var startIndex = (currentPage - 1) * listContent.pageSize,
-                streamsToRender = listContent.streams.slice(startIndex, startIndex + listContent.pageSize);
-
-            renderPageFragment(streamsToRender);
+            var newPageIdx = (currentPage - 1);
+            flipPage(currentPage, newPageIdx, false);
 
             if (currentPage === listContent.totalPages) {
-                nextPageButton.disable();
+                nextPageButton.disabled = true;
                 nextPageButton.classList.add('disabled');
             }
 
-            prevPageButton.classList.remove('disabled');  // QUESTION: Correct placement of class removal?
-
-
+            if (!!prevPageButton.disabled) {
+                prevPageButton.disabled = false;
+                prevPageButton.classList.remove('disabled');  // QUESTION: Correct placement of class removal?
+            }
         }
     }
 };
