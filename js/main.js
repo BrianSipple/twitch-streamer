@@ -1,32 +1,42 @@
 window.onload = function () {
 
 
-    // Wire up DOM elements
-    var resultsListContainer = document.querySelector('.results-list-container'),
+    var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
+        MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
+
+        //////// Wire up some initial references to DOM elements that we'll be manipulating
         mainViewContainer = document.querySelector('.main-view-container'),
-        totalResultsCountElem = document.querySelector('.results-count'),
+        totalResultsCountElem = document.querySelector('.results-count-container'),
+
+        // Search input references
         searchInput = document.querySelector('#searchInput'),
         searchSubmitButton = document.querySelector('#searchSubmit'),
         searchForm = document.querySelector('#searchForm'),
         errorDialog = document.querySelector('.error-dialog'),
-        streamListContainer = document.querySelector('stream-list-container'),
+
+
+        // Stream List references
+        streamListContainer = document.querySelector('.stream-list-container'),
+        streamListFrag = document.createDocumentFragment(),
+
+
+        // Page nav references
+        currentPageElem = document.querySelector('.current-page'),
+        totalPagesElem = document.querySelector('.total-pages'),
         prevPageButton = document.querySelector('.page-nav.prev'),
         nextPageButton = document.querySelector('.page-nav.next'),
 
 
-        currentPage = 0,
+        ////// State tracking variables
+        currentPage = 1,
         isSearching = false,
-
-        // Settings for XHR
-        BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
-        MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
-
 
         listContent = {
             pageSize: 5,  // initialize a default page size
             numStreams: 0,
             totalPages: 1,
-            streams: undefined  // FILL here with data necessary for rendering the search results
+            streams: undefined,  // FILL here with data necessary for rendering the search results
+            pageFragments: []
         },
 
         loadJSONP = (function loadJSONP () {
@@ -79,7 +89,6 @@ window.onload = function () {
     function handleSearchSubmit(e) {
 
         e.preventDefault();
-        debugger;
 
         var searchString = this.searchInput.value;
 
@@ -164,7 +173,6 @@ window.onload = function () {
             //req.send();
 
             loadJSONP(url, function (data) {
-                debugger;
                 if (data) {
                     resolve(data);
 
@@ -184,14 +192,13 @@ window.onload = function () {
 
         var callbackParam = '&callback=';   // Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
 
-        return (searchString !== 'undefined') ?
+        return (searchString === 'undefined') ?
             BASE_URL + callbackParam :
-            BASE_URL + encodeURIComponent(searchString) + callbackParam;
+            BASE_URL + encodeURIComponent(' ' + searchString) + callbackParam;
     }
 
 
     function searchForStreams(searchString) {
-
 
         var urlString = makeUrlStringFromSearchInput(searchString);
 
@@ -202,10 +209,19 @@ window.onload = function () {
             var results = response.streams;
 
             if (results) {
+
+                // store current state of the list
                 listContent.streams = results;  // store results
-                listContent.numStreams = response._total;
+                listContent.numStreams = response['_total'];
                 listContent.totalPages = Math.ceil(listContent.numStreams / listContent.pageSize);
-                renderStreams(results.slice(0, listContent.pageSize));  // render results for the first page
+
+                // update UI with correct counts
+                totalResultsCountElem.textContent = 'Total Results: ' + listContent.numStreams.toString();
+                totalPagesElem.textContent = listContent.totalPages.toString();
+                currentPageElem.textContent = currentPage.toString();
+
+                renderFirstPageAfterSearch(results.slice(0, listContent.pageSize));  // render results for the first page
+                makePageFragmentsAfterSearch(results);
 
             } else {
                 reportNoMatch();  // TODO: Implement
@@ -216,12 +232,85 @@ window.onload = function () {
         });
     }
 
+
+    function buildStreamElem (streamData) {
+
+        var listElemContainer = document.createElement('div'),
+            previewImageElem = document.createElement('img'),
+            listElemInfoContainer = document.createElement('div'),
+
+            imageWidth = 100,
+            imageHeight = 100;
+
+
+        /////// Compose the fragment that will be appended to listElemInfoContainer ///////
+        var infoFrag = document.createDocumentFragment(),
+            streamTitle = document.createElement('h2'),
+            streamSubtitle = document.createElement('p'),
+            streamDescription = document.createElement('div');
+
+        // Title
+        streamTitle.textContent = streamData.channel['display_name'];
+        infoFrag.appendChild(streamTitle);
+
+        // Subtitle
+        streamSubtitle.textContent = streamData.game + ' - ' + streamData.viewers + ' viewers';
+        infoFrag.appendChild(streamSubtitle);
+
+        // Description
+        streamDescription.textContent = streamData.channel.status;
+        infoFrag.appendChild(streamDescription);
+
+        listElemInfoContainer.appendChild(infoFrag);
+
+
+        //// Create the proper source string for our preview image and set it on the elem /////
+        var imageSourceString = streamData.preview.template.replace(/\{width}/, imageWidth);
+        imageSourceString = imageSourceString.replace(/\{height}/, imageHeight);
+
+        previewImageElem.src = imageSourceString;
+
+
+        ////// Compose the final list element out of the preview image and the info element
+        listElemContainer.appendChild(previewImageElem);
+        listElemContainer.appendChild(infoFrag);
+
+        return listElemContainer;
+    }
+
     /**
-     * Given a list of streams, build up, then inject,
-     * a list fragment into the streams container
+     * We want to be able to display the first page right away after a user searches,
+     * so this method will take a slice of the results and render an initial DOM Fragment
+     * to the list
      */
-    function renderStreams(streams) {
-        console.log(streams);
+    function renderFirstPageAfterSearch (streams) {
+
+        var streamListFragment = document.createDocumentFragment();
+
+        var streamElem;
+        for (var i = 0, l = streams.length; i < l; i++) {
+            streamElem = buildStreamElem(streams[i]);
+            streamListFragment.appendChild(streamElem);
+        }
+        streamListContainer.appendChild(streamListFragment);
+    }
+
+    /**
+     * Using the entire list of search results, make DOM fragments for each page
+     * that can then be efficiently indexed and displayed later
+     */
+    function makePageFragmentsAfterSearch (streams) {
+
+    }
+
+
+
+
+    /**
+     * render a fragment stored at a given index on our list
+     */
+    function renderPageFragment(fragIdx) {
+
     }
 
 
@@ -239,7 +328,7 @@ window.onload = function () {
             var startIndex = (currentPage - 1) * listContent.pageSize,
                 streamsToRender = listContent.streams.slice(startIndex, startIndex + listContent.pageSize);
 
-            renderStreams(streamsToRender);
+            renderPageFragment(streamsToRender);
 
             if (currentPage === 1) {
                 prevPageButton.classList.add('disabled');
@@ -258,7 +347,7 @@ window.onload = function () {
             var startIndex = (currentPage - 1) * listContent.pageSize,
                 streamsToRender = listContent.streams.slice(startIndex, startIndex + listContent.pageSize);
 
-            renderStreams(streamsToRender);
+            renderPageFragment(streamsToRender);
 
             if (currentPage === listContent.totalPages) {
                 nextPageButton.disable();

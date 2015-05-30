@@ -134,6 +134,7 @@ body {
 
 .section-container {
     padding: 0.3em 0.8em;
+    height: 100%;
 }
 
 
@@ -144,6 +145,29 @@ body {
 
 #searchInput:invalid {
     box-shadow: 0 0 3px 1px hsla(360, 100%, 50%, 0.8);
+}
+
+
+.list-header {
+    height: 8%;
+    width: 100%;
+    display: block;
+    position: relative;
+}
+.list-header .page-nav-container {
+    position: absolute;
+    top: 0.5em;
+    right: 1em;
+}
+.list-header .results-count-container {
+    position: absolute;
+    top: 0.5em;
+    left: 1em;
+}
+
+
+.results-count.p {
+    opacity: 0;  /* Don't display until we have some results */
 }
 
 
