@@ -21,7 +21,7 @@ window.onload = function () {
 
 
         // Page nav references
-        currentPageNumberElem = document.querySelector('.current-page'),
+        currentPageNumberElem = document.querySelector('.current-page-number'),
         totalPagesElem = document.querySelector('.total-pages'),
         prevPageButton = document.querySelector('.page-nav.prev'),
         nextPageButton = document.querySelector('.page-nav.next'),
@@ -294,8 +294,8 @@ window.onload = function () {
         streamListContainer.appendChild(streamListFragment);
 
         // set the fragment as the first element of the list that's tracking them
-        listContent.pageFragments = [];
-        listContent.currentPageElem = streamListFragment.firstChild;
+        listContent.pageFragments = [];  // TODO: Determine if fragments are even needed
+        listContent.currentPageElem = streamListContainer.lastChild;  // TODO: Determine if we need to track this on the list for pagination
         listContent.pageFragments.push(streamListFragment);
     }
 
