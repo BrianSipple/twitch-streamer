@@ -188,7 +188,7 @@ window.onload = function () {
         streamTitle.textContent = streamData.channel['display_name'];
 
         // Subtitle
-        var streamSubtitle = document.createElement('p');
+        var streamSubtitle = document.createElement('div');
         streamSubtitle.textContent = streamData.game + ' - ' + streamData.viewers + ' viewers';
 
         // Description
@@ -214,7 +214,7 @@ window.onload = function () {
 
 
         ////// Compose the final list element out of the preview image and the info element
-        listItemContainerElem.appendChild(thumbnailImageElem);
+        listItemContainerElem.appendChild(thumbnailImageContainer);
         listItemContainerElem.appendChild(itemInfoContainer);
         listItemContainerElem.classList.add('list-item-container');
 
