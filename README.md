@@ -1,4 +1,4 @@
-Twitch Starcraft Streamer
+Twitch StarCraft Streamer
 =========================================================
 
 # Running Tests
