@@ -104,24 +104,6 @@ window.onload = function () {
         }
     }
 
-
-    // TODO: Determine if needed
-    //function createCORSRequest(method, url) {
-    //
-    //    var req = new XMLHttpRequest();
-    //
-    //    if ('withCredentials' in req) {
-    //        // Check if the XMLHttpRequest object has a "withCredentials" property.
-    //        // "withCredentials" only exists on XMLHTTPRequest2 objects.
-    //        req.open(method, url, true);
-    //
-    //    } else {
-    //        req = null;
-    //    }
-    //    return req;
-    //}
-
-
     /**
      * Return a new Promise based upon sending an XHR request for data
      * to the given url
@@ -415,5 +397,5 @@ window.onload = function () {
             }
         }
     }
-}
-;
+};
+
