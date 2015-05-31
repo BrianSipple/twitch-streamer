@@ -17,7 +17,6 @@ window.onload = function () {
 
     // Stream List references
         streamListContainer = document.querySelector('.stream-list-container'),
-        streamListFrag = document.createDocumentFragment(),
 
 
     // Page nav references
@@ -171,17 +170,18 @@ window.onload = function () {
     }
 
 
-    function buildStreamElem(streamData) {
+    function buildListItemContainerElem(streamData) {
 
-        var listElemContainer = document.createElement('div'),
-            previewImageElem = document.createElement('img'),
+        var listItemContainerElem = document.createElement('div'),
+            thumbnailImageContainer = document.createElement('div'),
+            thumbnailImageElem = document.createElement('img'),
             itemInfoContainer = document.createElement('div'),
 
-            imageWidth = 160,
-            imageHeight = 125;
+            imageWidth = 130,
+            imageHeight = 90;
 
 
-        /////// Compose the pieces that will be appended to listElemInfoContainer ///////
+        /////// Compose the pieces of the list item into container ///////
 
         // Title
         var streamTitle = document.createElement('h2');
@@ -199,20 +199,26 @@ window.onload = function () {
         itemInfoContainer.appendChild(streamTitle);
         itemInfoContainer.appendChild(streamSubtitle);
         itemInfoContainer.appendChild(streamDescription);
+        itemInfoContainer.classList.add('item-info-container');
 
+
+        ///////////////// Compose the pieces of the thumbnail container ////////
 
         //// Create the proper source string for our preview image and set it on the elem /////
         var imageSourceString = streamData.preview.template.replace(/\{width}/, imageWidth);
         imageSourceString = imageSourceString.replace(/\{height}/, imageHeight);
 
-        previewImageElem.src = imageSourceString;
+        thumbnailImageElem.src = imageSourceString;
+        thumbnailImageContainer.appendChild(thumbnailImageElem);
+        thumbnailImageContainer.classList.add('thumbnail-container');
 
 
         ////// Compose the final list element out of the preview image and the info element
-        listElemContainer.appendChild(previewImageElem);
-        listElemContainer.appendChild(itemInfoContainer);
+        listItemContainerElem.appendChild(thumbnailImageElem);
+        listItemContainerElem.appendChild(itemInfoContainer);
+        listItemContainerElem.classList.add('list-item-container');
 
-        return listElemContainer;
+        return listItemContainerElem;
     }
 
 
@@ -222,7 +228,7 @@ window.onload = function () {
 
         var streamElem;
         for (var i = 0, l = streams.length; i < l; i++) {
-            streamElem = buildStreamElem(streams[i]);
+            streamElem = buildListItemContainerElem(streams[i]);
             listPageContainerElem.appendChild(streamElem);
         }
 
