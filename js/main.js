@@ -310,7 +310,7 @@ window.onload = function () {
      * indices given.
      */
     function flipPage(oldPageIdx, newPageIdx, isDecrementing) {
-        
+
         var currentPageElem = streamListContainer.children[oldPageIdx];
 
         if (currentPageElem === undefined) {
@@ -322,8 +322,6 @@ window.onload = function () {
         // If decrementing, set a class hook to indicate that we're flipping to the previous page.
         // If incrementing, set a class hook to indicate that we're flipping to the next page
         !!isDecrementing ?
-            //( currentPageElem.classList.remove('decremented-to'), currentPageElem.classList.add('flipped-to-next') ) :
-            //( currentPageElem.classList.remove('incremented-to'), currentPageElem.classList.add('flipped-to-prev') );
             currentPageElem.className = 'list-page-container flipped-to-next' :
             currentPageElem.className = 'list-page-container flipped-to-prev';
 

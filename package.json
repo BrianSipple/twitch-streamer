@@ -1,0 +1,27 @@
+{
+  "name": "twitch-streamer",
+  "version": "1.0.0",
+  "description": "Twitch Starcraft Streamer =========================================================",
+  "main": "js/main.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BrianSipple/twitch-streamer.git"
+  },
+  "author": "Brian Sipple",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BrianSipple/twitch-streamer/issues"
+  },
+  "homepage": "https://github.com/BrianSipple/twitch-streamer",
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "mocha": "^2.2.5",
+    "sinon": "^1.14.1"
+  }
+}

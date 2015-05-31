@@ -1,0 +1,25 @@
+<link rel="stylesheet" media="all" href="../node_modules/mocha/mocha.css">
+
+<div id="mocha">
+    <p><a href="."></a></p>
+</div>
+<div id="messages"></div>
+<div id="fixtures"></div>
+
+<!-- Vendor files -->
+<script src="../node_modules/mocha/mocha.js"></script>
+<script src="../node_modules/chai/chai.js"></script>
+<script src="../node_modules/sinon/pkg/sinon-1.14.1.js"></script>
+
+
+<!-- Application files -->
+<script src="../js/main.js"></script>
+
+<!-- Mocha setup -->
+<script>mocha.setup('bdd');</script>
+
+<!-- Test files -->
+<script src="../test/main.spec.js"></script>
+
+<!-- Run ze tests! -->
+<script>mocha.run()</script>
