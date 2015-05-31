@@ -4,30 +4,30 @@ window.onload = function () {
     var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
         MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
 
-        //////////////// Wire up some initial references to DOM elements that we'll be manipulating ////////////////
+    //////////////// Wire up some initial references to DOM elements that we'll be manipulating ////////////////
         mainViewContainer = document.querySelector('.main-view-container'),
         totalResultsCountElem = document.querySelector('.results-count-container'),
 
-        // Search input references
+    // Search input references
         searchInput = document.querySelector('#searchInput'),
         searchSubmitButton = document.querySelector('#searchSubmit'),
         searchForm = document.querySelector('#searchForm'),
         errorDialog = document.querySelector('.error-dialog'),
 
 
-        // Stream List references
+    // Stream List references
         streamListContainer = document.querySelector('.stream-list-container'),
         streamListFrag = document.createDocumentFragment(),
 
 
-        // Page nav references
+    // Page nav references
         currentPageNumberElem = document.querySelector('.current-page-number'),
         totalPagesElem = document.querySelector('.total-pages'),
         prevPageButton = document.querySelector('.page-nav.prev'),
         nextPageButton = document.querySelector('.page-nav.next'),
 
 
-        //////////////// State tracking variables ////////////////
+    //////////////// State tracking variables ////////////////
         currentPage = 1,
         isSearching = false,
 
@@ -38,9 +38,9 @@ window.onload = function () {
             currentPageElem: undefined
         },
 
-        // Helper for setting a JSONP callback when making API requests
-        // (Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
-        loadJSONP = (function loadJSONP () {
+    // Helper for setting a JSONP callback when making API requests
+    // (Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
+        loadJSONP = (function loadJSONP() {
 
             var callCount = 0;
 
@@ -54,7 +54,7 @@ window.onload = function () {
                     url = url.replace(/callback=/, 'callback=' + name);
 
                 } else if (url.match(/\?/)) {
-                    url += '?callback=' + name;
+                    url += '&callback=' + name;
                 }
 
                 // create the script
@@ -66,7 +66,7 @@ window.onload = function () {
                 window[name] = function (data) {
 
                     // Execute the callback
-                    callback.call( (context || window), data);
+                    callback.call((context || window), data);
 
                     // cleanup
                     document.querySelector('head').removeChild(script);
@@ -120,7 +120,6 @@ window.onload = function () {
     //    }
     //    return req;
     //}
-
 
 
     /**
@@ -185,16 +184,14 @@ window.onload = function () {
     }
 
 
-
-
-
     function makeUrlStringFromSearchInput(searchString) {
 
-        var callbackParam = '&callback=';   // Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
+        var callbackParam = '&callback=',   // Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
+            limitParam = '&limit=' + (listContent.pageSize + 1);   // Setting a "limit" will give us a proper url in the response for the "next" page's elements
 
         return (searchString === 'undefined') ?
-            BASE_URL + callbackParam :
-            BASE_URL + encodeURIComponent(' ' + searchString) + callbackParam;
+        BASE_URL + limitParam + callbackParam :
+        BASE_URL + encodeURIComponent(' ' + searchString) + limitParam + callbackParam;
     }
 
 
@@ -210,8 +207,9 @@ window.onload = function () {
 
             if (results) {
 
+                currentPage = 1; // reset to page 1
+
                 // store current state of the list
-                listContent.streams = results;  // store results
                 listContent.numStreams = response['_total'];
                 listContent.totalPages = Math.ceil(listContent.numStreams / listContent.pageSize);
 
@@ -220,8 +218,9 @@ window.onload = function () {
                 totalPagesElem.textContent = listContent.totalPages.toString();
                 currentPageNumberElem.textContent = currentPage.toString();
 
-                renderFirstPageAfterSearch(results.slice(0, listContent.pageSize));  // render results for the first page (this also becomes the first fragment in our in-menory list
-                makePageFragmentsAfterSearch(results.slice(listContent.pageSize));   // get to work on building our in-memory list for everything else
+                renderFirstPageAfterSearch(results);  // render results for the first page (this also becomes the first element in our in-memory list
+                //makePageElementsAfterSearch(results.slice(listContent.pageSize));   // get to work on building our in-memory list for everything else
+                completePageElementsAfterSearch(listContent.numStreams - listContent.pageSize, listContent.pageSize, response['_links'].next);   // Having computed our number of pages, keep grabbing data in for the next results in the background
 
             } else {
                 reportNoMatch();  // TODO: Implement
@@ -233,7 +232,7 @@ window.onload = function () {
     }
 
 
-    function buildStreamElem (streamData) {
+    function buildStreamElem(streamData) {
 
         var listElemContainer = document.createElement('div'),
             previewImageElem = document.createElement('img'),
@@ -277,62 +276,96 @@ window.onload = function () {
         return listElemContainer;
     }
 
-    /**
-     * We want to be able to display the first page right away after a user searches,
-     * so this method will take a page-sized slice of the results and render an initial fragment
-     * to the DOM.
-     */
-    function renderFirstPageAfterSearch (streams) {
 
-        var streamListFragment = document.createDocumentFragment();
+    function bulidPageContainerElement(streams) {
+        var listPageContainerElem = document.createElement('div');
+        listPageContainerElem.classList.add('list-page-container');
 
         var streamElem;
         for (var i = 0, l = streams.length; i < l; i++) {
             streamElem = buildStreamElem(streams[i]);
-            streamListFragment.appendChild(streamElem);
+            listPageContainerElem.appendChild(streamElem);
         }
-        streamListContainer.appendChild(streamListFragment);
 
-        // set the fragment as the first element of the list that's tracking them
-        listContent.pageFragments = [];  // TODO: Determine if fragments are even needed
-        listContent.currentPageElem = streamListContainer.lastChild;  // TODO: Determine if we need to track this on the list for pagination
-        listContent.pageFragments.push(streamListFragment);
+        return listPageContainerElem;
     }
 
     /**
-     * Using the entire list of search results, make DOM fragments for each page
-     * that can then be efficiently indexed and displayed later
+     * We want to be able to display the first page right away after a user searches,
+     * so this method will take a page-sized slice of the results and render an initial element
+     * to the DOM.
      */
-    function makePageFragmentsAfterSearch (streams) {
-        if ( (!listContent.hasOwnProperty('pageFragments')) ||
-             (!Array.isArray(listContent.pageFragments)) ||
-             (listContent.pageFragments.length === 0) ) {
+    function renderFirstPageAfterSearch(streams) {
+
+        var pageContainerElem = bulidPageContainerElement(streams);
+        pageContainerElem.classList.add('current-page');
+
+        // If this isn't our first return from a search query, we need to replace the
+        // existing content
+        if (streamListContainer.children.length > 0) {
+            var newStreamListContainer = document.createElement('div');
+            newStreamListContainer.classList.add('stream-list-container');
+            streamListContainer.parentNode.replaceChild(newStreamListContainer, streamListContainer);
+
+            // update the reference to the newly inserted node
+            streamListContainer = newStreamListContainer;
+            newStreamListContainer = null;
+        }
+
+        streamListContainer.appendChild(pageContainerElem);
+
+        // set the element as the first element of our in-memory list that's tracking them
+        listContent.pageElems = [];
+        listContent.pageElems.push(pageContainerElem);
+    }
+
+
+    /**
+     * Build a DOM element for a page that can then be efficiently indexed and displayed later
+     */
+    function makePageElementsAfterSearch(streams) {
+        if ((!listContent.hasOwnProperty('pageElems')) ||
+            (!Array.isArray(listContent.pageElems)) ||
+            (listContent.pageElems.length === 0)) {
 
             // This should never be reached!
-            throw new Error('No list exists upon which to add stream fragments. It should have already been created');
+            throw new Error('No list exists upon which to add stream page elements. It should have already been created');
         } else {
 
-            var streamListFragment = document.createDocumentFragment();
+            if (streams.length > listContent.pageSize) {
 
-            var streamElem;
-            for (var i = 0, l = streams.length; i < l; i++) {
-                streamElem = buildStreamElem(streams[i]);
-                streamListFragment.appendChild(streamElem);
-                listContent.pageFragments.push(streamListFragment);
+                // Correct for an edge case where this gets called with a number of streams
+                // that is in excess of our page size
+                streams.splice(listContent.pageSize);
             }
+
+            var pageContainerElem = bulidPageContainerElement(streams);
+            listContent.pageElems.push(pageContainerElem);
         }
     }
 
 
+    function completePageElementsAfterSearch(numStreamsRemaining, pageSize, nextQuery) {
+        if (numStreamsRemaining > 0) {
+            getJSONP(nextQuery).then(function (results) {
+
+                makePageElementsAfterSearch(results.streams);
+                numStreamsRemaining -= pageSize;
+                nextQuery = results['_links'].next;
+                completePageElementsAfterSearch(numStreamsRemaining, pageSize, nextQuery);
+
+            });
+        }
+    }
 
 
     /**
      * Flip from the current page to a new page based upon the corresponding
      * indices given.
      */
-    function flipPage (currentPageIdx, newPageIdx, isDecrementing) {
+    function flipPage(oldPageIdx, newPageIdx, isDecrementing) {
 
-        var currentPageElem = streamListContainer.children[currentPageIdx];
+        var currentPageElem = streamListContainer.children[oldPageIdx];
 
         if (currentPageElem === undefined) {
             throw new Error('flipPage: no current page found -- we shouldn\'t be executing this');
@@ -343,25 +376,32 @@ window.onload = function () {
         // Apply class selectors to animate page-flip
         // TODO: CSS Animation?
         !!isDecrementing ?
-            currentPageElem.classList.add('flip-prev') :
-            currentPageElem.classList.add('flip-next');
+            ( currentPageElem.classList.add('flipped-to-prev'), currentPageElem.classList.remove('flipped-to-next') ) :
+            ( currentPageElem.classList.add('flipped-to-next'), currentPageElem.classList.remove('flipped-to-prev') );
 
 
         //////////////// Bring in the new hotness ////////////////
+        var newPageElem;
 
-        var nextPageElem = streamListContainer.children[newPageIdx];
-
-        // If the DOM container already has the page fragment, we just need to make it visible
-        if (nextPageElem) {
-            nextPageElem.classList.add('current-page'); // TODO: CSS Animation?
-
-        } else {
-            // If not, we're appending it for the first time from our in-memory list.
-            streamListContainer.appendChild(listContent.pageFragments[newPageIdx]);
-            streamListContainer.lastChild.classList.add('current-page');  // TODO: CSS Animation?
-
-            // QUESTION: Do we even need fragments with this approach? At this point, it kind of just looks to be unused overhead
+        // If the DOM container already has the page element, we just need to make it visible
+        // If not, we're appending it for the first time from our in-memory list.
+        if (!(newPageElem = streamListContainer.children[newPageIdx])) {
+            newPageElem = listContent.pageElems[newPageIdx];
         }
+
+        newPageElem.classList.add('current-page');
+
+        !!isDecrementing ?
+            (newPageElem.classList.remove('flipped-to-current-from-prev'), newPageElem.classList.add('flipped-to-current-from-next') ) :
+            (newPageElem.classList.remove('flipped-to-current-from-next'), newPageElem.classList.add('flipped-to-current-from-prev') );
+
+        // TODO: CSS Animation for above "flipped-to-current" classing
+        // QUESTION: Does the class need to be applied after DOM insertion to trigger the animation?
+
+        streamListContainer.appendChild(newPageElem);
+
+        // After EVERYTHING, update the page number to reflect the page that was just flipped to
+        currentPageNumberElem.textContent = currentPage.toString();
     }
 
 
@@ -377,10 +417,10 @@ window.onload = function () {
 
         if (currentPage > 1) {
 
+            var newPageIdx = (currentPage - 2);  // newPageIdx will be 2 less than "currentPage" (-1 b/c of decrement and -1 b/c of zero-basing)
             currentPage--;
 
-            var newPageIdx = (currentPage - 1);
-            flipPage(currentPage, newPageIdx, true);
+            flipPage(newPageIdx + 1, newPageIdx, true);
 
             if (currentPage === 1) {
                 prevPageButton.disabled = true;
@@ -398,13 +438,13 @@ window.onload = function () {
      * Triggered by click to "next page" button
      */
     function incrementPage() {
-
+        
         if (currentPage < listContent.totalPages) {
 
+            var newPageIdx = currentPage;  // newPageIdx will match "currentPage" since it's zero-based
             currentPage++;
 
-            var newPageIdx = (currentPage - 1);
-            flipPage(currentPage, newPageIdx, false);
+            flipPage(newPageIdx - 1, newPageIdx, false);
 
             if (currentPage === listContent.totalPages) {
                 nextPageButton.disabled = true;
@@ -417,4 +457,5 @@ window.onload = function () {
             }
         }
     }
-};
+}
+;
