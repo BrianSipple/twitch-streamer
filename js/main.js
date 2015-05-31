@@ -258,6 +258,7 @@ window.onload = function () {
         }
 
         streamListContainer.appendChild(pageContainerElem);
+        pageContainerElem.classList.add('new-results-rendering');
 
         // set the element as the first element of our in-memory list that's tracking them
         listContent.pageElems = [];
@@ -309,20 +310,22 @@ window.onload = function () {
      * indices given.
      */
     function flipPage(oldPageIdx, newPageIdx, isDecrementing) {
-
+        
         var currentPageElem = streamListContainer.children[oldPageIdx];
 
         if (currentPageElem === undefined) {
             throw new Error('flipPage: no current page found -- we shouldn\'t be executing this');
         }
 
-        currentPageElem.classList.remove('current-page');
 
-        // Apply class selectors to animate page-flip
-        // TODO: CSS Animation
+        // Apply class hook to animate page-flip
+        // If decrementing, set a class hook to indicate that we're flipping to the previous page.
+        // If incrementing, set a class hook to indicate that we're flipping to the next page
         !!isDecrementing ?
-            ( currentPageElem.classList.add('flipped-to-prev'), currentPageElem.classList.remove('flipped-to-next') ) :
-            ( currentPageElem.classList.add('flipped-to-next'), currentPageElem.classList.remove('flipped-to-prev') );
+            //( currentPageElem.classList.remove('decremented-to'), currentPageElem.classList.add('flipped-to-next') ) :
+            //( currentPageElem.classList.remove('incremented-to'), currentPageElem.classList.add('flipped-to-prev') );
+            currentPageElem.className = 'list-page-container flipped-to-next' :
+            currentPageElem.className = 'list-page-container flipped-to-prev';
 
 
         //////////////// Bring in the new hotness ////////////////
@@ -334,17 +337,17 @@ window.onload = function () {
             newPageElem = listContent.pageElems[newPageIdx];
         }
 
-        newPageElem.classList.add('current-page');
 
-        !!isDecrementing ?
-            (newPageElem.classList.remove('flipped-to-current-from-prev'), newPageElem.classList.add('flipped-to-current-from-next') ) :
-            (newPageElem.classList.remove('flipped-to-current-from-next'), newPageElem.classList.add('flipped-to-current-from-prev') );
-
-        // TODO: CSS Animation for above "flipped-to-current" classing
-        // QUESTION: Does the class need to be applied after DOM insertion to trigger the animation?
-
-
-        streamListContainer.appendChild(newPageElem);
+        // Apply a class hook to animate the appearance
+        // The hook should distinguish between the page being reached via decrement or increment
+        // NOTE: At this stage, if we're not decrementing, it means we're also appending a new element. If we're
+        // decrementing, we just need to update the class name to trigger the animation, and otherwise leave the nodes as they are
+        if (isDecrementing) {
+            newPageElem.className = 'list-page-container current-page decremented-to';
+        } else {
+            newPageElem.className = 'list-page-container current-page incremented-to';
+            streamListContainer.appendChild(newPageElem);
+        }
 
         // After EVERYTHING, update the page number to reflect the page that was just flipped to
         currentPageNumberElem.textContent = currentPage.toString();
