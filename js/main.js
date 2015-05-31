@@ -130,47 +130,6 @@ window.onload = function () {
 
         return new Promise(function (resolve, reject) {
 
-            //var req = createCORSRequest('GET', url);
-            //
-            //if (!req) {
-            //    reject(Error('CORS not supported with this browser'));
-            //}
-            //
-            //var reqTimer = setTimeout(function () {  // if XHR won't finish before timeout, trigger a failure
-            //    req.abort();
-            //}, MAX_XHR_WAITING_TIME);
-            //
-            //req.onload = function () {
-            //
-            //    // onload is called even on a 404, so check the status
-            //    if (req.status === 200) {
-            //        clearTimeout(reqTimer);
-            //        resolve(req.responseText);
-            //
-            //    } else {
-            //        // Otherwise reject with the status text
-            //        // which will hopefully be a meaningful error
-            //        reject(Error(req.statusText));
-            //    }
-            //};
-            //
-            //// Account for exceeding the timeout limit
-            //req.onabort = function () {
-            //    reject(Error('Request exceeded timeout limit of ' + MAX_XHR_WAITING_TIME + 'ms'));
-            //};
-            //
-            //// Account for any networking errors that might occur
-            //req.onerror = function () {
-            //    reject(Error('Network Error'));
-            //};
-            //
-            //// Decorate the request with the proper headers needed for API access
-            //req.setRequestHeader('Accept', 'application/vnd.twitchtv.v3+json, application/json');
-            //req.withCredentials = true;
-            //
-            //// Here we go!
-            //req.send();
-
             loadJSONP(url, function (data) {
                 if (data) {
                     resolve(data);
@@ -179,7 +138,6 @@ window.onload = function () {
                     reject();
                 }
             });
-
         });
     }
 
@@ -219,7 +177,6 @@ window.onload = function () {
                 currentPageNumberElem.textContent = currentPage.toString();
 
                 renderFirstPageAfterSearch(results);  // render results for the first page (this also becomes the first element in our in-memory list
-                //makePageElementsAfterSearch(results.slice(listContent.pageSize));   // get to work on building our in-memory list for everything else
                 completePageElementsAfterSearch(listContent.numStreams - listContent.pageSize, listContent.pageSize, response['_links'].next);   // Having computed our number of pages, keep grabbing data in for the next results in the background
 
             } else {
@@ -374,7 +331,7 @@ window.onload = function () {
         currentPageElem.classList.remove('current-page');
 
         // Apply class selectors to animate page-flip
-        // TODO: CSS Animation?
+        // TODO: CSS Animation
         !!isDecrementing ?
             ( currentPageElem.classList.add('flipped-to-prev'), currentPageElem.classList.remove('flipped-to-next') ) :
             ( currentPageElem.classList.add('flipped-to-next'), currentPageElem.classList.remove('flipped-to-prev') );
@@ -397,6 +354,7 @@ window.onload = function () {
 
         // TODO: CSS Animation for above "flipped-to-current" classing
         // QUESTION: Does the class need to be applied after DOM insertion to trigger the animation?
+
 
         streamListContainer.appendChild(newPageElem);
 
@@ -438,7 +396,7 @@ window.onload = function () {
      * Triggered by click to "next page" button
      */
     function incrementPage() {
-        
+
         if (currentPage < listContent.totalPages) {
 
             var newPageIdx = currentPage;  // newPageIdx will match "currentPage" since it's zero-based
