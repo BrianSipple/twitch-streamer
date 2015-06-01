@@ -20,6 +20,7 @@ window.onload = function () {
 
 
     // Page nav references
+        listHeaderElem = document.querySelector('.list-header'),
         currentPageNumberElem = document.querySelector('.current-page-number'),
         totalPagesElem = document.querySelector('.total-pages'),
         prevPageButton = document.querySelector('.page-nav.prev'),
@@ -95,6 +96,7 @@ window.onload = function () {
 
             isSearching = true;
             searchSubmitButton.classList.add('disabled');
+            listHeaderElem.style.opacity = 0;
 
             searchForStreams(searchString).then(function (resp) {
                 isSearching = false;
@@ -259,6 +261,9 @@ window.onload = function () {
 
         streamListContainer.appendChild(pageContainerElem);
         pageContainerElem.classList.add('new-results-rendering');
+        listHeaderElem.style.opacity = 1;
+        prevPageButton.classList.add('disabled');
+
 
         // set the element as the first element of our in-memory list that's tracking them
         listContent.pageElems = [];
@@ -398,10 +403,8 @@ window.onload = function () {
                 nextPageButton.classList.add('disabled');
             }
 
-            if (!!prevPageButton.disabled) {
-                prevPageButton.disabled = false;
-                prevPageButton.classList.remove('disabled');  // QUESTION: Correct placement of class removal?
-            }
+            prevPageButton.classList.remove('disabled');
+
         }
     }
 };

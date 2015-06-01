@@ -28,15 +28,24 @@
         <div class="section-container">
             <header class="search-container">
                 <form id="searchForm" name="searchForm">
-                    <label for="searchInput">Find Streams</label>
-                    <input id="searchInput"
-                           name="searchInput"
-                           type="text"
-                           maxlength="500"
-                           autofocus
-                           title="search"
-                           placeholder="Search query..."/>
-                    <input name="searchSubmit" type="submit" id="searchSubmit" value="Search">
+
+                    <div layout="horizontal">
+                        <div layout="vertical" layout-align="center" class="form-item">
+                            <label for="searchInput">Find Streams</label>
+                            <input id="searchInput"
+                                   name="searchInput"
+                                   type="text"
+                                   maxlength="500"
+                                   autofocus
+                                   title="search"
+                                   placeholder="Search query..."/>
+                        </div>
+
+                        <div layout="vertical" layout-align="end" class="form-item">
+                            <input name="searchSubmit" type="submit" id="searchSubmit" value="Search">
+                        </div>
+                    </div>
+
                 </form>
             </header>
         </div>
@@ -51,9 +60,9 @@
                 <div class="results-count-container"></div>
 
                 <div class="page-nav-container">
-                    <button disabled class="page-nav prev">&#9664;</button>
+                    <a class="page-nav prev">&#9664;</a>
                     <span class="current-page-number"></span>/<span class="total-pages"></span>
-                    <button class="page-nav next">&#9654;</button>
+                    <a class="page-nav next">&#9654;</a>
                 </div>
             </header>
 
