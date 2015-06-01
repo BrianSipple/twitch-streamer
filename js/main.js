@@ -38,21 +38,30 @@ window.onload = function () {
             currentPageElem: undefined
         },
 
-    // Helper for setting a JSONP callback when making API requests
-    // (Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
+        /**
+         * Helper for setting a JSONP callback when making API requests
+         * (Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
+         *
+         * The loadJSONP variable will now be a reference to an IIFE, which takes the following params:
+         *
+         * @param url -- the fully formatted url with which to make an HTTP request
+         * @param callback --
+         * @param opt_context -- an optional context to bind to when executing the callback
+         */
         loadJSONP = (function loadJSONP() {
 
-            var callCount = 0;
+            var callCount = 0;   // increment so that every call creates a unique callback reference.
 
-            return function (url, callback, context) {
+            return function (url, callback, opt_context) {
                 // INIT
-                var name = '_jsonp_' + callCount++;
+                var name = '_jsonp_' + callCount++;   // make a unique name for the JSONP callback
 
                 // First, check whether a url has already been fully made EXCEPT for the
                 // necessary callback parameter
                 if (url.match(/callback=/)) {
                     url = url.replace(/callback=/, 'callback=' + name);
 
+                    // At least try to make sure we have a proper query string adding the "&callback" param
                 } else if (url.match(/\?/)) {
                     url += '&callback=' + name;
                 }
@@ -62,22 +71,35 @@ window.onload = function () {
                 script.type = 'text/javascript';
                 script.src = url;
 
-                // Setup handler
+
+                //////// Dynamically setup the handler as a temporary window property  ///////
+
+                // Make sure we aren't accidentally clashing with another property, if so, store the current
+                // value away and replace it later
+                var temp;
+                if (window[name]) {
+                    temp = window[name];
+                }
+
                 window[name] = function (data) {
 
                     // Execute the callback
-                    callback.call((context || window), data);
+                    callback.call((opt_context || window), data);
 
                     // cleanup
                     document.querySelector('head').removeChild(script);
                     script = null;
                     delete window[name];
+
+                    // restore old prop if necessary
+                    if (temp) {
+                        window[name] = temp;
+                    }
                 };
 
                 // Load ze JSON
                 document.querySelector('head').appendChild(script);
             };
-
         }());
 
     //////////////// Event listeners ////////////////
@@ -88,7 +110,7 @@ window.onload = function () {
 
     function handleSearchSubmit(e) {
 
-        e.preventDefault();
+        e.preventDefault();  // prevent default form action -- we'll take it from here
 
         var searchString = this.searchInput.value;
 
@@ -96,12 +118,20 @@ window.onload = function () {
 
             isSearching = true;
             searchSubmitButton.classList.add('disabled');
-            listHeaderElem.style.opacity = 0;
+            searchSubmitButton.disabled = true;
+            listHeaderElem.style.opacity = 0;  // will reappear with newly computed results after download
 
-            searchForStreams(searchString).then(function (resp) {
+            return getAllStreams(searchString).then(function (resp) {
                 isSearching = false;
                 searchSubmitButton.classList.remove('disabled');
-            });
+                searchSubmitButton.disabled = false;
+            })
+                .catch(function (err) {
+
+                    // Handle anything that gets thrown here.
+                    // For now, we'll make sure that the throwable gets logged to the console.
+                    console.log.call(console, err);
+                });
         }
     }
 
@@ -125,6 +155,14 @@ window.onload = function () {
     }
 
 
+    /**
+     * Encode a proper url query string based upon the search text that the
+     * user has provided.
+     *
+     * In addition to encoding the input text, we also need to decorate the URL
+     * with a proper limit paramter, and ensure that it's ready to have a callback
+     * function appended to it (see loadJSONP function)
+     */
     function makeUrlStringFromSearchInput(searchString) {
 
         var callbackParam = '&callback=',   // Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
@@ -136,13 +174,11 @@ window.onload = function () {
     }
 
 
-    function searchForStreams(searchString) {
+    function getAllStreams(searchString) {
 
         var urlString = makeUrlStringFromSearchInput(searchString);
 
         return getJSONP(urlString).then(function (response) {
-
-            debugger;
 
             var results = response.streams;
 
@@ -163,14 +199,15 @@ window.onload = function () {
                 completePageElementsAfterSearch(listContent.numStreams - listContent.pageSize, listContent.pageSize, response['_links'].next);   // Having computed our number of pages, keep grabbing data in for the next results in the background
 
             } else {
-                reportNoMatch();  // TODO: Implement
+                throw new Error('The search was successfully executed, but no streams found');
             }
-
-        }).catch(function (error) {
-            // TODO: Handle any errors from the search operation
         });
     }
 
+
+    //////////////////////////////////////////////////////////////////////
+    // DOM MANIPULATION STUFF....
+    //////////////////////////////////////////////////////////////////////
 
     function buildListItemContainerElem(streamData) {
 
@@ -309,7 +346,6 @@ window.onload = function () {
         }
     }
 
-
     /**
      * Flip from the current page to a new page based upon the corresponding
      * indices given.
@@ -326,41 +362,69 @@ window.onload = function () {
         // Apply class hook to animate page-flip
         // If decrementing, set a class hook to indicate that we're flipping to the previous page.
         // If incrementing, set a class hook to indicate that we're flipping to the next page
-        !!isDecrementing ?
-            currentPageElem.className = 'list-page-container flipped-to-next' :
+        if (isDecrementing) {
+            currentPageElem.className = 'list-page-container flipped-to-next';
+            prevPageButton.classList.add('disabled');
+        } else {
             currentPageElem.className = 'list-page-container flipped-to-prev';
+            nextPageButton.classList.add('disabled');
+        }
 
 
         //////////////// Bring in the new hotness ////////////////
         var newPageElem;
 
-        // If the DOM container already has the page element, we just need to make it visible
-        // If not, we're appending it for the first time from our in-memory list.
-        if (!(newPageElem = streamListContainer.children[newPageIdx])) {
-            newPageElem = listContent.pageElems[newPageIdx];
+        try {
+
+            
+            // If the DOM container already has the page element, we just need to make it visible
+            // If not, we're appending it for the first time from our in-memory list.
+            if (!(newPageElem = streamListContainer.children[newPageIdx])) {
+                newPageElem = listContent.pageElems[newPageIdx];
+            }
+
+            // Apply a class hook to animate the appearance
+            // The hook should distinguish between the page being reached via decrement or increment
+            // NOTE: At this stage, if we're not decrementing, it means we're also appending a new element. If we're
+            // decrementing, we just need to update the class name to trigger the animation, and otherwise leave the nodes as they are
+            if (isDecrementing) {
+                newPageElem.className = 'list-page-container current-page decremented-to';
+            } else {
+                newPageElem.className = 'list-page-container current-page incremented-to';
+                streamListContainer.appendChild(newPageElem);
+            }
+
+            // After EVERYTHING, update the page number to reflect the page that was just flipped to
+            // ...and enable the button again (if more pages can be flipped to in the same directions
+            if (isDecrementing) {
+                currentPage--;
+                if (currentPage > 1) {
+                    prevPageButton.classList.remove('disabled');
+                }
+
+            } else {
+                currentPage++;
+                if (currentPage < listContent.totalPages) {
+                    nextPageButton.classList.remove('disabled');
+                }
+            }
+            currentPageNumberElem.textContent = currentPage.toString();
+
+
+        } catch (err) {
+            console.log('Hmm.... ' + err);
+
+            // Don't change the current page number -- just re-enable whichever button was disabled
+            prevPageButton.classList.remove('disabled');
+            nextPageButton.classList.remove('disabled');  // QUESTION: Is it cheaper not to even check what state we're in here? It seems like the DOM API is pretty good at just deleting the class if it's there and saying whatever if it't not.
+
+        } finally {
+
+
         }
 
 
-        // Apply a class hook to animate the appearance
-        // The hook should distinguish between the page being reached via decrement or increment
-        // NOTE: At this stage, if we're not decrementing, it means we're also appending a new element. If we're
-        // decrementing, we just need to update the class name to trigger the animation, and otherwise leave the nodes as they are
-        if (isDecrementing) {
-            newPageElem.className = 'list-page-container current-page decremented-to';
-        } else {
-            newPageElem.className = 'list-page-container current-page incremented-to';
-            streamListContainer.appendChild(newPageElem);
-        }
-
-        // After EVERYTHING, update the page number to reflect the page that was just flipped to
-        currentPageNumberElem.textContent = currentPage.toString();
     }
-
-
-    function reportNoMatch() {
-        console.log('Successful search operation, but no streams found');
-    }
-
 
     /**
      * Triggered on click to "previous page" button
@@ -370,19 +434,10 @@ window.onload = function () {
         if (currentPage > 1) {
 
             var newPageIdx = (currentPage - 2);  // newPageIdx will be 2 less than "currentPage" (-1 b/c of decrement and -1 b/c of zero-basing)
-            currentPage--;
+            //currentPage--;
 
             flipPage(newPageIdx + 1, newPageIdx, true);
-
-            if (currentPage === 1) {
-                prevPageButton.disabled = true;
-                prevPageButton.classList.add('disabled');
-            }
-
-            if (!!nextPageButton.disabled) {
-                nextPageButton.disabled = false;
-                nextPageButton.classList.remove('disabled');  // QUESTION: Correct placement of class removal?
-            }
+            nextPageButton.classList.remove('disabled');
         }
     }
 
@@ -394,15 +449,9 @@ window.onload = function () {
         if (currentPage < listContent.totalPages) {
 
             var newPageIdx = currentPage;  // newPageIdx will match "currentPage" since it's zero-based
-            currentPage++;
+            //currentPage++;
 
             flipPage(newPageIdx - 1, newPageIdx, false);
-
-            if (currentPage === listContent.totalPages) {
-                nextPageButton.disabled = true;
-                nextPageButton.classList.add('disabled');
-            }
-
             prevPageButton.classList.remove('disabled');
 
         }
