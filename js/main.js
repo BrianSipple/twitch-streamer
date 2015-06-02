@@ -2,17 +2,20 @@ window.onload = function () {
 
 
     var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=',
+        NETWORK_TIMEOUT_THRESHOLD = 7500,   // max amount of time for network requests before throwing an error
 
     //////////////// Wire up some initial references to DOM elements that we'll be manipulating ////////////////
         mainViewContainer = document.querySelector('.main-view-container'),
         totalResultsCountElem = document.querySelector('.results-count-container'),
         currentQueryNameElem = document.querySelector('.current-query-name'),
+        welcomeMessageElem = document.querySelector('.welcome-message'),
 
     // Search input references
         searchInput = document.querySelector('#searchInput'),
         searchSubmitButton = document.querySelector('#searchSubmit'),
         searchForm = document.querySelector('#searchForm'),
-        errorDialogElem = document.querySelector('.global-dialog.error'),
+        errorDialogContainer = document.querySelector('.global-dialog-container'),
+        errorDialogElem = errorDialogContainer.querySelector('.global-dialog.error'),
         errorMessageElem = errorDialogElem.querySelector('.message'),
 
 
@@ -108,9 +111,12 @@ window.onload = function () {
     prevPageButton.addEventListener('click', decrementPage);
     nextPageButton.addEventListener('click', incrementPage);
 
-    errorDialogElem.querySelector('.button').addEventListener('mouseup', function () {
+    errorDialogElem.querySelector('.button-primary').addEventListener('mouseup', function () {
         errorDialogElem.classList.remove('show');
         errorDialogElem.classList.add('hide');
+        errorDialogContainer.style.backgroundColor = 'transparent';
+        errorDialogContainer.style.zIndex = '0';
+        reEnableSearch();
     });
 
 
@@ -126,6 +132,7 @@ window.onload = function () {
             searchSubmitButton.classList.add('disabled');
             searchSubmitButton.disabled = true;
             listHeaderElem.style.opacity = 0;  // will reappear with newly computed results after download
+            welcomeMessageElem.style.opacity = 0;
 
             return getAllStreams(searchString).then(function (resp) {
                 isSearching = false;
@@ -137,6 +144,7 @@ window.onload = function () {
                     // Handle anything that gets thrown here.
                     // For now, we'll make sure that the throwable gets logged to the console.
                     console.log.call(console, err);
+                    showGeneralErrorDialog(err);
                 });
         }
     }
@@ -149,8 +157,13 @@ window.onload = function () {
 
         return new Promise(function (resolve, reject) {
 
+            var networkTimeout = setTimeout(function () {
+                reject()
+            }, NETWORK_TIMEOUT_THRESHOLD);
+
             loadJSONP(url, function (data) {
                 if (data) {
+                    clearTimeout(networkTimeout);
                     resolve(data);
 
                 } else {
@@ -212,6 +225,15 @@ window.onload = function () {
         });
     }
 
+
+    function activateDialog () {
+        errorDialogContainer.style.backgroundColor = 'hsla(0, 0%, 0%, 0.5)';
+        errorDialogContainer.style.zIndex = '40';
+
+        errorDialogElem.classList.remove('hide');
+        errorDialogElem.classList.add('show');
+    }
+
     function showNoneFoundDialog (searchString) {
 
         // Set the dialog message
@@ -220,8 +242,23 @@ window.onload = function () {
             'Please enter a new query and try again';
 
         // Bring it into view
-        errorDialogElem.classList.remove('hide');
-        errorDialogElem.classList.add('show');
+        activateDialog();
+    }
+
+    function showGeneralErrorDialog (err) {
+
+        // Set the dialog message
+        errorMessageElem.textContent = 'Something went wrong while attempting to perform the search\n' +
+        'Please try refreshing the page and searching again.';
+
+        // Bring it into view
+        activateDialog();
+    }
+
+    function reEnableSearch () {
+        isSearching = false;
+        searchSubmitButton.classList.remove('disabled');
+        searchSubmitButton.disabled = false;
     }
 
 
@@ -281,7 +318,7 @@ window.onload = function () {
     }
 
 
-    function bulidPageContainerElement(streams) {
+    function buildPageContainerElement(streams) {
         var listPageContainerElem = document.createElement('div');
         listPageContainerElem.classList.add('list-page-container');
 
@@ -301,7 +338,7 @@ window.onload = function () {
      */
     function renderFirstPageAfterSearch(streams) {
 
-        var pageContainerElem = bulidPageContainerElement(streams);
+        var pageContainerElem = buildPageContainerElement(streams);
         pageContainerElem.classList.add('current-page');
 
         // If this isn't our first return from a search query, we need to replace the
@@ -347,7 +384,7 @@ window.onload = function () {
                 streams.splice(listContent.pageSize);
             }
 
-            var pageContainerElem = bulidPageContainerElement(streams);
+            var pageContainerElem = buildPageContainerElement(streams);
             listContent.pageElems.push(pageContainerElem);
         }
     }

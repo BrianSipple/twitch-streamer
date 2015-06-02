@@ -21,10 +21,17 @@
     your browser</a> to improve your experience.</p>
 <![endif]-->
 
-<div class="global-dialog error">
-    <h1>Please Try Again</h1>
-    <div class="message"></div>
-    <button class="button button-primary">Got it</button>
+<div class="global-dialog-container">
+    <div class="global-dialog error">
+        <div class="content-wrapper">
+            <h1>Please Try Again</h1>
+
+            <div class="message"></div>
+        </div>
+        <div class="button-panel" layout="row" layout-align="end">
+            <button class="button button-primary">Got it</button>
+        </div>
+    </div>
 </div>
 
 <div class="main-view-container">
@@ -34,7 +41,7 @@
         <div class="section-container">
             <header class="search-container">
 
-                <h1>Twitch Scratcher</h1>
+                <h1>Twitch Streamer</h1>
 
                 <form id="searchForm" name="searchForm">
 
@@ -77,6 +84,12 @@
                     <a class="page-nav next">&#9654;</a>
                 </div>
             </header>
+
+            <div class="welcome-message" layout="vertical" layout-align="center">
+                <h2>Welcome!</h2>
+
+                <p>Enter a query above to begin browsing streams from the Twitch API</p>
+            </div>
 
             <div class="stream-list-container">
 
