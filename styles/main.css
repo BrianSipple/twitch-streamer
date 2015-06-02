@@ -163,13 +163,15 @@ a.page-nav:hover {
     box-shadow: 0 0 2px 4px hsla(0, 0%, 100%, 0.28);
 }
 
+input {
+    box-shadow: none;
+}
 input[type="submit"] {
     border-radius: 5px;
     border: 1px outset hsla(0, 0%, 0%, 0.3);
     background-image: linear-gradient(
         hsla(0, 0%, 100%, .87) 50%, hsla(0, 0%, 100%, 0.67) 100%);
     background-color: #00BCD4;
-    outline: none;
 }
 
 
@@ -325,10 +327,6 @@ input[type="submit"] {
 }
 .search-container .form-item:nth-child(2) {
     width: 100px;
-}
-
-#searchInput:invalid {
-    box-shadow: 0 0 3px 1px hsla(360, 100%, 50%, 0.8);
 }
 
 
