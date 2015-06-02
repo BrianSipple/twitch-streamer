@@ -21,12 +21,21 @@
     your browser</a> to improve your experience.</p>
 <![endif]-->
 
+<div class="global-dialog error">
+    <h1>Please Try Again</h1>
+    <div class="message"></div>
+    <button class="button button-primary">Got it</button>
+</div>
+
 <div class="main-view-container">
 
     <section class="page-section_heading">
 
         <div class="section-container">
             <header class="search-container">
+
+                <h1>Twitch Scratcher</h1>
+
                 <form id="searchForm" name="searchForm">
 
                     <div layout="horizontal">
@@ -36,6 +45,7 @@
                                    name="searchInput"
                                    type="text"
                                    maxlength="500"
+                                   required
                                    autofocus
                                    title="search"
                                    placeholder="Search query..."/>
@@ -56,8 +66,10 @@
 
         <div class="section-container">
 
-            <header class="list-header">
+            <header class="list-header" layout="row" layout-align="space-around">
                 <div class="results-count-container"></div>
+
+                <div class="current-query-name"></div>
 
                 <div class="page-nav-container">
                     <a class="page-nav prev">&#9664;</a>

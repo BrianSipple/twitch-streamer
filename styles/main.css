@@ -166,8 +166,9 @@ a.page-nav:hover {
 input[type="submit"] {
     border-radius: 5px;
     border: 1px outset hsla(0, 0%, 0%, 0.3);
-    background-image: linear-gradient(hsla(0, 0%, 100%, .87) 50%, hsla(0, 0%, 100%, 0.67) 100%);
-    background-color: hsla(224, 99%, 56%, 1);
+    background-image: linear-gradient(
+        hsla(0, 0%, 100%, .87) 50%, hsla(0, 0%, 100%, 0.67) 100%);
+    background-color: #00BCD4;
     outline: none;
 }
 
@@ -189,17 +190,22 @@ input[type="submit"] {
 
 
 .main-view-container {
-    background-color: hsla(0, 100%, 100%, 1);
     width: 70%;
-    max-width: 800px;
-    min-width: 460px;
     height: 95%;
     margin-top: 1em;
-    margin-right: auto;
     margin-bottom: 0.5em;
-    margin-left: auto;
+
+}
+
+.main-view-container,
+.global-dialog {
+    background-color: hsla(0, 100%, 100%, 1);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19),
                 0 6px 6px rgba(0, 0, 0, 0.23);
+    max-width: 800px;
+    min-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .section-container {
@@ -212,9 +218,31 @@ input[type="submit"] {
     padding: 0.3em 0.8em;
 }
 
+.global-dialog {
+    position: absolute;
+    width: 80vw;
+    height: 60vh;
+    opacity: 0;
+    margin: auto;
+    top: 25%;
+    bottom: 25%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 10;
+}
+.global-dialog.show {
+    animation: SlideInFromTop 0.7s cubic-bezier(0.215, 0.610, 0.355, 1.000);  /* easeOutCubic */
+    animation-fill-mode: forwards;
+}
+.global-dialog.hide {
+    animation: SlideOutDown 0.7s cubic-bezier(0.215, 0.610, 0.355, 1.000);  /* easeOutCubic */
+    animation-fill-mode: forwards;  /* QUESTION: Needed during .show, yes -- but needed here? */
+}
+
 
 .form-item {
-    margin: 0 1em;
+    margin: 0 0.6em;
 }
 
 
@@ -225,17 +253,9 @@ input[type="submit"] {
     opacity: 0;     /* Switched to 1 when we know we have content to show... */
     transition: opacity 0.7s 0.8s;  /* ... but only AFTER the content slides in :-) */
     position: relative;
+    align-items: center;
 }
-.list-header .page-nav-container {
-    position: absolute;
-    top: 0.5em;
-    right: 1em;
-}
-.list-header .results-count-container {
-    position: absolute;
-    top: 0.5em;
-    left: 1em;
-}
+
 
 .list-page-container {
     width: 100%;
@@ -280,12 +300,25 @@ input[type="submit"] {
 }
 
 .search-container {
-    position: absolute;
-    top: 30%;
+    position: relative;
+    background-color: #00BCD4;
+    height: 100%;
     width: 100%;
 }
+.search-container h1 {
+    position: absolute;
+    margin: 0;
+    top: 0.3em;
+    right: 0.3em;
+}
+.search-container h1,
+.search-container label {
+    color: #FFFF00;
+}
 .search-container form {
-    padding: 0 1em;
+    position: absolute;
+    top: 40%;
+    left: 0.3em;
 }
 .search-container .form-item:nth-child(1) {
     width: 150px;
@@ -365,6 +398,18 @@ input[type="submit"] {
         left: 0;
         transform: translate3d(0, 0, 0);
         opacity: 1;
+    }
+}
+@keyframes SlideOutDown {
+    0% {
+        left: 0;
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+    100% {
+        left: 0;
+        transform: translate3d(0, 100%, 0);
+        opacity: 0;
     }
 }
 

@@ -1,18 +1,19 @@
 window.onload = function () {
 
 
-    var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=starcraft',
-        MAX_XHR_WAITING_TIME = 5000,  // 5000ms --> 5s
+    var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=',
 
     //////////////// Wire up some initial references to DOM elements that we'll be manipulating ////////////////
         mainViewContainer = document.querySelector('.main-view-container'),
         totalResultsCountElem = document.querySelector('.results-count-container'),
+        currentQueryNameElem = document.querySelector('.current-query-name'),
 
     // Search input references
         searchInput = document.querySelector('#searchInput'),
         searchSubmitButton = document.querySelector('#searchSubmit'),
         searchForm = document.querySelector('#searchForm'),
-        errorDialog = document.querySelector('.error-dialog'),
+        errorDialogElem = document.querySelector('.global-dialog.error'),
+        errorMessageElem = errorDialogElem.querySelector('.message'),
 
 
     // Stream List references
@@ -107,6 +108,11 @@ window.onload = function () {
     prevPageButton.addEventListener('click', decrementPage);
     nextPageButton.addEventListener('click', incrementPage);
 
+    errorDialogElem.querySelector('.button').addEventListener('mouseup', function () {
+        errorDialogElem.classList.remove('show');
+        errorDialogElem.classList.add('hide');
+    });
+
 
     function handleSearchSubmit(e) {
 
@@ -192,6 +198,7 @@ window.onload = function () {
 
                 // update UI with correct counts
                 totalResultsCountElem.textContent = 'Total Results: ' + listContent.numStreams.toString();
+                currentQueryNameElem.textContent = 'Current Search: "' + searchString + '"';
                 totalPagesElem.textContent = listContent.totalPages.toString();
                 currentPageNumberElem.textContent = currentPage.toString();
 
@@ -199,9 +206,22 @@ window.onload = function () {
                 completePageElementsAfterSearch(listContent.numStreams - listContent.pageSize, listContent.pageSize, response['_links'].next);   // Having computed our number of pages, keep grabbing data in for the next results in the background
 
             } else {
-                throw new Error('The search was successfully executed, but no streams found');
+                //throw new Error('The search was successfully executed, but no streams found');
+                showNoneFoundDialog(searchString);
             }
         });
+    }
+
+    function showNoneFoundDialog (searchString) {
+
+        // Set the dialog message
+        errorMessageElem.textContent = 'No streams were found corresponding to the query\n' +
+            '"' + searchString + '"\n' +
+            'Please enter a new query and try again';
+
+        // Bring it into view
+        errorDialogElem.classList.remove('hide');
+        errorDialogElem.classList.add('show');
     }
 
 
@@ -376,7 +396,7 @@ window.onload = function () {
 
         try {
 
-            
+
             // If the DOM container already has the page element, we just need to make it visible
             // If not, we're appending it for the first time from our in-memory list.
             if (!(newPageElem = streamListContainer.children[newPageIdx])) {
