@@ -201,7 +201,7 @@ window.onload = function () {
 
             var results = response.streams;
 
-            if (results) {
+            if (results && response['_total'] > 0) {
 
                 currentPage = 1; // reset to page 1
 
