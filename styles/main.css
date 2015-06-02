@@ -279,7 +279,7 @@ input[type="submit"] {
 }
 .global-dialog.hide {
     animation: SlideOutDown 0.7s cubic-bezier(0.215, 0.610, 0.355, 1.000);  /* easeOutCubic */
-    animation-fill-mode: forwards;  /* QUESTION: Needed during .show, yes -- but needed here? */
+
 }
 .global-dialog .button-panel {
     position: absolute;
