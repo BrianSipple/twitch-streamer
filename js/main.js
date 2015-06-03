@@ -219,7 +219,6 @@ window.onload = function () {
                 completePageElementsAfterSearch(listContent.numStreams - listContent.pageSize, listContent.pageSize, response['_links'].next);   // Having computed our number of pages, keep grabbing data in for the next results in the background
 
             } else {
-                //throw new Error('The search was successfully executed, but no streams found');
                 showNoneFoundDialog(searchString);
             }
         });
@@ -535,6 +534,11 @@ window.onload = function () {
         }
     }
 
-    function PageNotReadyError (msg) {}
+    /**
+     * Helper "class" for detecting page-not-ready errors in our paging try block
+     */
+    function PageNotReadyError (msg) {
+        this.msg = msg;
+    }
 };
 
