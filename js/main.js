@@ -132,7 +132,10 @@ window.onload = function () {
             searchSubmitButton.classList.add('disabled');
             searchSubmitButton.disabled = true;
             listHeaderElem.style.opacity = 0;  // will reappear with newly computed results after download
+
+            // We won't be needing this anymore
             welcomeMessageElem.style.opacity = 0;
+            welcomeMessageElem.style.zIndex = -1;
 
             return getAllStreams(searchString).then(function (resp) {
                 enableSearch();
