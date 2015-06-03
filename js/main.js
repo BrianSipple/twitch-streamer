@@ -475,6 +475,10 @@ window.onload = function () {
             // If not, we're appending it for the first time from our in-memory list.
             if (!(newPageElem = streamListContainer.children[newPageIdx])) {
                 if (!(newPageElem = listContent.pageElems[newPageIdx])) {
+                    // If we get here, it means that the page simply hasn't been built yet. I only noticed this
+                    // issue when rapidly trying to flip through the results after they returned.
+                    // After implementing this initial solution, the current state of the paging is maintained
+                    // and the user only notices a brief "no-op"... as opposed to everything going blank and going out of sync.
                     throw new PageNotReadyError();
                 }
             }
@@ -517,10 +521,7 @@ window.onload = function () {
             } else {
                 throw new Error('unknown error during page flip');
             }
-
         }
-
-
     }
 
     /**
