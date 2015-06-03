@@ -200,9 +200,7 @@ window.onload = function () {
         var urlString = makeUrlStringFromSearchInput(searchString);
 
         return getJSONP(urlString).then(function (response) {
-
-            console.log(response);
-
+            
             var results = response.streams;
 
 
