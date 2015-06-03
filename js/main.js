@@ -116,7 +116,7 @@ window.onload = function () {
         errorDialogElem.classList.add('hide');
         errorDialogContainer.style.backgroundColor = 'transparent';
         errorDialogContainer.style.zIndex = '0';
-        reEnableSearch();
+        enableSearch();
     });
 
 
@@ -135,9 +135,8 @@ window.onload = function () {
             welcomeMessageElem.style.opacity = 0;
 
             return getAllStreams(searchString).then(function (resp) {
-                isSearching = false;
-                searchSubmitButton.classList.remove('disabled');
-                searchSubmitButton.disabled = false;
+                enableSearch();
+                enableNav();
             })
                 .catch(function (err) {
 
@@ -201,6 +200,7 @@ window.onload = function () {
 
             var results = response.streams;
 
+
             if (results && response['_total'] > 0) {
 
                 currentPage = 1; // reset to page 1
@@ -255,10 +255,15 @@ window.onload = function () {
         activateDialog();
     }
 
-    function reEnableSearch () {
+    function enableSearch () {
         isSearching = false;
         searchSubmitButton.classList.remove('disabled');
         searchSubmitButton.disabled = false;
+    }
+
+    function enableNav () {
+        nextPageButton.classList.remove('disabled');
+        prevPageButton.classList.remove('disabled');
     }
 
 
@@ -277,7 +282,7 @@ window.onload = function () {
             imageHeight = 90;
 
 
-        /////// Compose the pieces of the list item into container ///////
+        /////// Compose the pieces of the list item info container ///////
 
         // Title
         var streamTitle = document.createElement('h2');
@@ -285,16 +290,30 @@ window.onload = function () {
 
         // Subtitle
         var streamSubtitle = document.createElement('div');
-        streamSubtitle.textContent = streamData.game + ' - ' + streamData.viewers + ' viewers';
+        streamSubtitle.innerHTML = streamData.game +
+            ' - <span class="accentuated">' + streamData.viewers + ' viewers</span>'; // highlight the viewer count
 
         // Description
-        var streamDescription = document.createElement('div');
+        var streamDescriptionContainer = document.createElement('p'),
+            streamDescription = document.createElement('span'),
+            ellipsis = document.createElement('span'),          // This shows an ellipsis ONLY if the text overflows...
+            ellipsisFill = document.createElement('span');     // ...because this patches up the empty space if it doesn't
+
+        streamDescriptionContainer.className = 'multi-line-clamp clamp-2';
+        streamDescription.className = 'text';
         streamDescription.textContent = streamData.channel.status;
 
+        ellipsis.className = 'ellipsis';
+        ellipsis.innerHTML = '&#133;';
+        ellipsisFill.className = 'fill';
+
+        streamDescription.appendChild(ellipsis);
+        streamDescription.appendChild(ellipsisFill);
+        streamDescriptionContainer.appendChild(streamDescription);
 
         itemInfoContainer.appendChild(streamTitle);
         itemInfoContainer.appendChild(streamSubtitle);
-        itemInfoContainer.appendChild(streamDescription);
+        itemInfoContainer.appendChild(streamDescriptionContainer);
         itemInfoContainer.classList.add('item-info-container');
 
 
@@ -433,11 +452,12 @@ window.onload = function () {
 
         try {
 
-
             // If the DOM container already has the page element, we just need to make it visible
             // If not, we're appending it for the first time from our in-memory list.
             if (!(newPageElem = streamListContainer.children[newPageIdx])) {
-                newPageElem = listContent.pageElems[newPageIdx];
+                if (!(newPageElem = listContent.pageElems[newPageIdx])) {
+                    throw new PageNotReadyError();
+                }
             }
 
             // Apply a class hook to animate the appearance
@@ -469,14 +489,15 @@ window.onload = function () {
 
 
         } catch (err) {
-            console.log('Hmm.... ' + err);
+            if (err instanceof PageNotReadyError) {
 
-            // Don't change the current page number -- just re-enable whichever button was disabled
-            prevPageButton.classList.remove('disabled');
-            nextPageButton.classList.remove('disabled');  // QUESTION: Is it cheaper not to even check what state we're in here? It seems like the DOM API is pretty good at just deleting the class if it's there and saying whatever if it't not.
+                // Don't change the current page number -- just re-enable whichever button was disabled
+                prevPageButton.classList.remove('disabled');
+                nextPageButton.classList.remove('disabled');  // QUESTION: Is it cheaper not to even check what state we're in here? It seems like the DOM API is pretty good at just deleting the class if it's there and saying whatever if it't not.
 
-        } finally {
-
+            } else {
+                throw new Error('unknown error during page flip');
+            }
 
         }
 
@@ -513,5 +534,7 @@ window.onload = function () {
 
         }
     }
+
+    function PageNotReadyError (msg) {}
 };
 
