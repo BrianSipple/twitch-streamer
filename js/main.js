@@ -184,11 +184,11 @@ window.onload = function () {
     function makeUrlStringFromSearchInput(searchString) {
 
         var callbackParam = '&callback=',   // Currently, JSON_P needs to be used with the Twitch API (https://github.com/justintv/Twitch-API/issues/133)
-            limitParam = '&limit=' + (listContent.pageSize + 1);   // Setting a "limit" will give us a proper url in the response for the "next" page's elements
+            limitParam = '&limit=' + (listContent.pageSize + 1);  // Setting a "limit" will give us a proper url in the response for the "next" page's elements
 
         return (searchString === 'undefined') ?
         BASE_URL + limitParam + callbackParam :
-        BASE_URL + encodeURIComponent(' ' + searchString) + limitParam + callbackParam;
+        BASE_URL + encodeURIComponent(searchString) + limitParam + callbackParam;
     }
 
 
@@ -197,6 +197,8 @@ window.onload = function () {
         var urlString = makeUrlStringFromSearchInput(searchString);
 
         return getJSONP(urlString).then(function (response) {
+
+            console.log(response);
 
             var results = response.streams;
 
