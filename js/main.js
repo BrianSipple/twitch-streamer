@@ -181,7 +181,7 @@ window.onload = function () {
      * user has provided.
      *
      * In addition to encoding the input text, we also need to decorate the URL
-     * with a proper limit paramter, and ensure that it's ready to have a callback
+     * with a proper limit parameter, and ensure that it's ready to have a callback
      * function appended to it (see loadJSONP function)
      */
     function makeUrlStringFromSearchInput(searchString) {
@@ -200,7 +200,7 @@ window.onload = function () {
         var urlString = makeUrlStringFromSearchInput(searchString);
 
         return getJSONP(urlString).then(function (response) {
-            
+
             var results = response.streams;
 
 
@@ -227,7 +227,9 @@ window.onload = function () {
         });
     }
 
-
+    /**
+     * After the dialog is correcly configured, this is called to animate it into view.
+     */
     function activateDialog () {
         errorDialogContainer.style.backgroundColor = 'hsla(0, 0%, 0%, 0.5)';
         errorDialogContainer.style.zIndex = '40';
@@ -236,6 +238,9 @@ window.onload = function () {
         errorDialogElem.classList.add('show');
     }
 
+    /**
+     * Prepare a message to indicate that no matches were found for the user's query.
+     */
     function showNoneFoundDialog (searchString) {
 
         // Set the dialog message
@@ -247,6 +252,9 @@ window.onload = function () {
         activateDialog();
     }
 
+    /**
+     * Prepare a message to indicate that something went wrong on our end during the query
+     */
     function showGeneralErrorDialog (err) {
 
         // Set the dialog message
@@ -273,6 +281,10 @@ window.onload = function () {
     // DOM MANIPULATION STUFF....
     //////////////////////////////////////////////////////////////////////
 
+    /**
+     * For each "stream" result that the API returns, we can use its content
+     * to dynamically create the right DOM element for the list
+     */
     function buildListItemContainerElem(streamData) {
 
         var listItemContainerElem = document.createElement('div'),
@@ -411,6 +423,11 @@ window.onload = function () {
     }
 
 
+    /**
+     * Recursive function that operates in the background after we get a response and have
+     * already rendered the first page. This builds up future page elements that can then be
+     * flipped to later.
+     */
     function completePageElementsAfterSearch(numStreamsRemaining, pageSize, nextQuery) {
         if (numStreamsRemaining > 0) {
             getJSONP(nextQuery).then(function (results) {
