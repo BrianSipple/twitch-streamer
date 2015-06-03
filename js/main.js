@@ -136,7 +136,7 @@ window.onload = function () {
 
             return getAllStreams(searchString).then(function (resp) {
                 enableSearch();
-                enableNav();
+                enableNav()
             })
                 .catch(function (err) {
 
