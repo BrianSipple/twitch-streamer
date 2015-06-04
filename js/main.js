@@ -521,7 +521,7 @@ window.onload = function () {
             }
 
             // After EVERYTHING, update the page number to reflect the page that was just flipped to
-            // ...and enable the button again (if more pages can be flipped to in the same directions
+            // ...and enable the button again (if more pages can be flipped to in the same direction
             if (isDecrementing) {
                 currentPage--;
                 if (currentPage > 1) {
