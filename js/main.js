@@ -144,8 +144,6 @@ window.onload = function () {
                 .catch(function (err) {
 
                     // Handle anything that gets thrown here.
-                    // For now, we'll make sure that the throwable gets logged to the console.
-                    console.log.call(console, err);
                     showGeneralErrorDialog(err);
                 });
         }
@@ -160,7 +158,7 @@ window.onload = function () {
         return new Promise(function (resolve, reject) {
 
             var networkTimeout = setTimeout(function () {
-                reject()
+                showNetworkTimeoutDialog();
             }, NETWORK_TIMEOUT_THRESHOLD);
 
             loadJSONP(url, function (data) {
@@ -238,6 +236,9 @@ window.onload = function () {
         errorDialogElem.classList.add('show');
     }
 
+
+
+
     /**
      * Prepare a message to indicate that no matches were found for the user's query.
      */
@@ -253,17 +254,34 @@ window.onload = function () {
     }
 
     /**
+     * Prepare a message to indicate that the request has timed out.
+     */
+    function showNetworkTimeoutDialog () {
+
+        // Set the dialog message
+        errorMessageElem.textContent = 'The search request has timed out. \n' +
+        'Please try checking for an active internet connection and searching again.';
+
+        // Bring it into view
+        activateDialog();
+    }
+
+    /**
      * Prepare a message to indicate that something went wrong on our end during the query
      */
     function showGeneralErrorDialog (err) {
 
         // Set the dialog message
-        errorMessageElem.textContent = 'Something went wrong while attempting to perform the search\n' +
+        errorMessageElem.textContent = 'Something went wrong while attempting to perform the search. \n' +
         'Please try refreshing the page and searching again.';
 
         // Bring it into view
         activateDialog();
     }
+
+
+
+
 
     function enableSearch () {
         isSearching = false;
