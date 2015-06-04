@@ -542,7 +542,7 @@ window.onload = function () {
 
                 // Don't change the current page number -- just re-enable whichever button was disabled
                 prevPageButton.classList.remove('disabled');
-                nextPageButton.classList.remove('disabled');  // QUESTION: Is it cheaper not to even check what state we're in here? It seems like the DOM API is pretty good at just deleting the class if it's there and saying whatever if it't not.
+                nextPageButton.classList.remove('disabled');  // QUESTION: Is it cheaper not to even check which button has the disabled class here? It seems like the DOM API is pretty good at just deleting the class if it's there and saying whatever if it's not.
 
             } else {
                 throw new Error('unknown error during page flip');
