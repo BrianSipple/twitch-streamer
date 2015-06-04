@@ -487,7 +487,8 @@ window.onload = function () {
 
             // Apply a class hook to animate the appearance
             // The hook should distinguish between the page being reached via decrement or increment
-            // NOTE: At this stage, if we're not decrementing, it means we're also appending a new element. If we're
+            // NOTE: At this stage, if we're incrementing and we couldn't find the new element in the operation above,
+            // it means we need to be APPENDING a new element from our in-memory list. If we're
             // decrementing, we just need to update the class name to trigger the animation, and otherwise leave the nodes as they are
             if (isDecrementing) {
                 newPageElem.className = 'list-page-container current-page decremented-to';
