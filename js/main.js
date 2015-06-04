@@ -467,13 +467,15 @@ window.onload = function () {
 
 
         //////////////// Bring in the new hotness ////////////////
-        var newPageElem;
+        var newPageElem,
+            appending = false;
 
         try {
 
             // If the DOM container already has the page element, we just need to make it visible
             // If not, we're appending it for the first time from our in-memory list.
             if (!(newPageElem = streamListContainer.children[newPageIdx])) {
+                appending = true;
                 if (!(newPageElem = listContent.pageElems[newPageIdx])) {
                     // If we get here, it means that the page simply hasn't been built yet. I only noticed this
                     // issue when rapidly trying to flip through the results after they returned.
@@ -491,7 +493,9 @@ window.onload = function () {
                 newPageElem.className = 'list-page-container current-page decremented-to';
             } else {
                 newPageElem.className = 'list-page-container current-page incremented-to';
-                streamListContainer.appendChild(newPageElem);
+                if (appending) {
+                    streamListContainer.appendChild(newPageElem);
+                }
             }
 
             // After EVERYTHING, update the page number to reflect the page that was just flipped to
@@ -532,7 +536,6 @@ window.onload = function () {
         if (currentPage > 1) {
 
             var newPageIdx = (currentPage - 2);  // newPageIdx will be 2 less than "currentPage" (-1 b/c of decrement and -1 b/c of zero-basing)
-            //currentPage--;
 
             flipPage(newPageIdx + 1, newPageIdx, true);
             nextPageButton.classList.remove('disabled');
@@ -547,7 +550,6 @@ window.onload = function () {
         if (currentPage < listContent.totalPages) {
 
             var newPageIdx = currentPage;  // newPageIdx will match "currentPage" since it's zero-based
-            //currentPage++;
 
             flipPage(newPageIdx - 1, newPageIdx, false);
             prevPageButton.classList.remove('disabled');
