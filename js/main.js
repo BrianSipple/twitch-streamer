@@ -120,6 +120,13 @@ window.onload = function () {
     });
 
 
+    /**
+     * Main entry point after a query is submitted. This disables the search button,
+     * kicks off the getAllStreams() Promise, and then re-enables search when we return
+     *
+     * (A fun next step would be to add a some sort of "loading" or "searching" animation
+     * on the page here to indicate what's going on to the user)
+     */
     function handleSearchSubmit(e) {
 
         e.preventDefault();  // prevent default form action -- we'll take it from here
