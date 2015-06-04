@@ -351,6 +351,9 @@ window.onload = function () {
     }
 
 
+    /**
+     * Builds a page of list items of a however many individual "streams" it receives.
+     */
     function buildPageContainerElement(streams) {
         var listPageContainerElem = document.createElement('div');
         listPageContainerElem.classList.add('list-page-container');
