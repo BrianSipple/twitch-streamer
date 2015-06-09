@@ -1,5 +1,15 @@
+/**
+ * NOTE: Around (almost exactly at) the time this application was submitted for
+ * review, an unexpected breaking change occurred to the Twitch API that caused
+ * previously correct queries to return empty data. I created a bug for the
+ * issue here (https://github.com/justintv/Twitch-API/issues/399), and while the error seems to have been largely corrected in the time since,
+ * I'm still noticing a few instances where a search returns fewer data items in the response's
+ * "streams" array than what is reported by the same response's "_total" property.
+ *
+ * If anyone reviewing the application has any questions concerning odd API behavior, I'd be more
+ * than happy to try an help answer them.
+ */
 window.onload = function () {
-
 
     var BASE_URL = 'https://api.twitch.tv/kraken/search/streams?q=',
         NETWORK_TIMEOUT_THRESHOLD = 7500,   // max amount of time for network requests before throwing an error
