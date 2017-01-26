@@ -20,8 +20,8 @@
   },
   "homepage": "https://github.com/BrianSipple/twitch-streamer",
   "devDependencies": {
-    "chai": "^2.3.0",
-    "mocha": "^2.2.5",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
     "sinon": "^1.14.1"
   }
 }
